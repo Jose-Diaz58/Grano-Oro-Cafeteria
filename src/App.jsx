@@ -59,24 +59,25 @@ export default function App() {
     return coincideCategoria && coincideBusqueda;
   });
 
+  // Enviar WhatsApp con formato limpio sin emojis incompatibles
   const enviarPedidoWhatsApp = ({ nombreCliente, ubicacion, notas }) => {
     if (carrito.length === 0) return;
 
     let mensaje = `*NUEVO PEDIDO - ${INFO_TIENDA.nombre.toUpperCase()}*\n`;
-    mensaje += `📍 *Sucursal:* ${INFO_TIENDA.sucursal}\n`;
-    if (nombreCliente) mensaje += `👤 *Cliente:* ${nombreCliente}\n`;
-    if (ubicacion) mensaje += `📌 *Ubicación/Mesa:* ${ubicacion}\n`;
+    mensaje += `*Sucursal:* ${INFO_TIENDA.sucursal}\n`;
+    if (nombreCliente) mensaje += `*Cliente:* ${nombreCliente}\n`;
+    if (ubicacion) mensaje += `*Ubicacion/Mesa:* ${ubicacion}\n`;
     mensaje += `-----------------------------------\n\n`;
     mensaje += `*DETALLE DEL PEDIDO:*\n`;
 
     carrito.forEach((item) => {
-      mensaje += `• ${item.cantidad}x ${item.nombre} - $${item.precio * item.cantidad} MXN\n`;
+      mensaje += `- ${item.cantidad}x ${item.nombre} - $${item.precio * item.cantidad} MXN\n`;
     });
 
     mensaje += `\n-----------------------------------\n`;
-    mensaje += `💰 *TOTAL: $${totalPrecio} MXN*\n`;
-    if (notas) mensaje += `📝 *Notas:* ${notas}\n`;
-    mensaje += `🌿 *Empaque ecológico incluido*\n`;
+    mensaje += `*TOTAL: $${totalPrecio} MXN*\n`;
+    if (notas) mensaje += `*Notas:* ${notas}\n`;
+    mensaje += `*Nota adicional:* Empaque ecologico incluido\n`;
 
     const url = `https://wa.me/52${INFO_TIENDA.whatsapp}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
