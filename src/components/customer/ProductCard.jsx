@@ -13,8 +13,6 @@ export default function ProductCard({ producto, onAgregar, onVerDetalle }) {
         <p className="text-stone-500 text-xs mb-3 line-clamp-2">{producto.descripcion}</p>
         <p className="text-stone-900 font-extrabold text-base mb-3">${producto.precio}</p>
       </div>
-
-      {/* Botones estilo de tu diseño */}
       <div className="flex items-center gap-2 pt-2">
         <button
           onClick={() => onAgregar(producto)}
@@ -22,13 +20,12 @@ export default function ProductCard({ producto, onAgregar, onVerDetalle }) {
         >
           + Añadir
         </button>
-
         <button
           onClick={() => onVerDetalle(producto)}
           className="w-9 h-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 font-serif font-bold text-xs flex items-center justify-center transition-colors border border-stone-200"
           title="Ver detalle"
         >
-          ℹ️
+          i
         </button>
       </div>
     </div>

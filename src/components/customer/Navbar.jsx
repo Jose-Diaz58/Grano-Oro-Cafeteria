@@ -21,7 +21,6 @@ export default function Navbar({ cartCount, onOpenCart, busqueda, setBusqueda, o
               i
             </button>
           </div>
-
           {/* Botón Carrito Mobile */}
           <button
             onClick={onOpenCart}
@@ -35,7 +34,6 @@ export default function Navbar({ cartCount, onOpenCart, busqueda, setBusqueda, o
             )}
           </button>
         </div>
-
         {/* Barra de Búsqueda */}
         <div className="w-full sm:w-72 relative">
           <input
@@ -55,7 +53,6 @@ export default function Navbar({ cartCount, onOpenCart, busqueda, setBusqueda, o
             </button>
           )}
         </div>
-
         {/* Botón Carrito Desktop */}
         <button
           onClick={onOpenCart}
