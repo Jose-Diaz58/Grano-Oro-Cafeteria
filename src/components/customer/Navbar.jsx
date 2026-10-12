@@ -1,66 +1,62 @@
 import React from 'react';
+import { Search, ShoppingCart, Info } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function Navbar({ cartCount, onOpenCart, busqueda, setBusqueda, onOpenInfo }) {
   return (
-    <header className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur-md text-stone-100 border-b border-stone-800 px-4 py-3 shadow-md">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Logo, Nombre y Botón Info */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+    <header className="sticky top-0 z-40 border-b border-espresso-600 bg-espresso-900/90 pt-[max(1rem,env(safe-area-inset-top))] pb-3 px-4 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        
+        {/* Logo, Info y Carrito (Móvil) */}
+        <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">☕</span>
-            <h1 className="font-serif text-lg font-bold text-amber-400 tracking-wide">
+            <h1 className="font-display text-xl font-bold tracking-wide text-parchment">
               Grano de Oro
             </h1>
-            
-            {/* Botón de Información (I) */}
-            <button
-              onClick={onOpenInfo}
-              className="ml-1 w-6 h-6 rounded-full bg-stone-800 hover:bg-amber-500 hover:text-stone-950 text-amber-400 font-serif font-bold text-xs flex items-center justify-center transition-colors border border-stone-700"
-              title="Información"
+            <button 
+              onClick={onOpenInfo} 
+              aria-label="Información de la tienda"
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-espresso-500 bg-espresso-700 text-parchment-muted transition-colors hover:border-espresso-400 hover:text-parchment focus:outline-none"
             >
-              i
+              <Info className="h-4 w-4" strokeWidth={2} />
             </button>
           </div>
+
           {/* Botón Carrito Mobile */}
-          <button
-            onClick={onOpenCart}
-            className="sm:hidden relative p-2 bg-stone-800 hover:bg-stone-700 rounded-xl transition-colors"
+          <button 
+            onClick={onOpenCart} 
+            className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-espresso-500 bg-espresso-700 text-parchment-dim transition-colors hover:text-parchment sm:hidden focus:outline-none"
           >
-            🛒
+            <ShoppingCart className="h-5 w-5" strokeWidth={1.8} />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-amber-500 text-stone-950 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center">
+              <span key={cartCount} className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-[10px] font-bold text-espresso-950 cart-bump">
                 {cartCount}
               </span>
             )}
           </button>
         </div>
+
         {/* Barra de Búsqueda */}
-        <div className="w-full sm:w-72 relative">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-parchment-muted" />
           <input
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar café, chilaquiles..."
-            className="w-full bg-stone-800 text-stone-100 placeholder-stone-400 text-xs rounded-xl pl-9 pr-8 py-2 border border-stone-700 focus:outline-none focus:border-amber-500 transition-colors"
+            placeholder="Buscar café, platillos..."
+            className="w-full rounded-xl border border-espresso-500 bg-espresso-700 py-2.5 pl-9 pr-4 text-sm text-parchment placeholder-parchment-muted transition-colors focus:border-gold-500 focus:outline-none"
           />
-          <span className="absolute left-3 top-2.5 text-stone-400 text-xs">🔍</span>
-          {busqueda && (
-            <button
-              onClick={() => setBusqueda('')}
-              className="absolute right-3 top-2.5 text-stone-400 hover:text-stone-200 text-xs font-bold"
-            >
-              ✕
-            </button>
-          )}
         </div>
+
         {/* Botón Carrito Desktop */}
-        <button
-          onClick={onOpenCart}
-          className="hidden sm:flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-sm"
+        <button 
+          onClick={onOpenCart} 
+          className="hidden h-11 items-center gap-2 rounded-xl bg-gold-500 px-5 text-sm font-semibold text-espresso-950 transition-colors hover:bg-gold-400 sm:flex active:scale-95"
         >
-          <span>🛒 Carrito</span>
+          <ShoppingCart className="h-4 w-4" strokeWidth={2} />
+          <span>Ver Carrito</span>
           {cartCount > 0 && (
-            <span className="bg-stone-950 text-amber-400 text-xs font-black px-2 py-0.5 rounded-full">
+            <span className="rounded-full bg-espresso-950 px-2 py-0.5 text-xs font-black text-gold-500">
               {cartCount}
             </span>
           )}

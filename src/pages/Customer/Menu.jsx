@@ -1,13 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { INFO_TIENDA } from '../../data/mockData';
 import { getProducts } from '../../api/productApi';
+import { INFO_TIENDA } from '../../data/mockData';
 import Navbar from '../../components/customer/Navbar';
-import HeroBanner from '../../components/customer/HeroBanner';
 import CategoriasNav from '../../components/customer/CategoriasNav';
 import ProductGrid from '../../components/customer/ProductGrid';
 import CartModal from '../../components/customer/modals/CartModal';
 import InfoModal from '../../components/customer/modals/InfoModal';
 import ProductDetailModal from '../../components/customer/modals/ProductDetailModal';
+import { Package } from 'lucide-react';
+
+// Componente auxiliar de Skeleton idéntico al de Figma
+function SkeletonCard() {
+  return (
+    <div className="rounded-2xl overflow-hidden bg-espresso-700 border border-espresso-500">
+      <div className="h-44 skeleton" />
+      <div className="p-4 space-y-3">
+        <div className="h-5 w-3/4 rounded-lg skeleton" />
+        <div className="h-4 w-1/3 rounded-lg skeleton" />
+        <div className="h-12 rounded-xl skeleton mt-2" />
+      </div>
+    </div>
+  );
+}
 
 export default function Menu() {
   const [productosBD, setProductosBD] = useState([]);
@@ -18,21 +32,35 @@ export default function Menu() {
   const [mostrarCarrito, setMostrarCarrito] = useState(false);
   const [mostrarInfo, setMostrarInfo] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  
+  // Estado de carga inicializado en true para mostrar los skeletons al abrir
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
+        setLoading(true);
         const productosData = await getProducts();
         setProductosBD(productosData);
-
+        
         const categoriasUnicas = ['Todas', ...new Set(productosData.map(p => p.categoria))];
         setCategoriasBD(categoriasUnicas);
       } catch (error) {
-        console.error('Error al cargar los datos del menú:', error);
+        console.error('Error al cargar datos:', error);
+      } finally {
+        setLoading(false);
       }
     };
     cargarDatos();
   }, []);
+
+  // Función al cambiar de categoría con animación de carga simulada breve si se desea
+  const selectCat = (cat) => {
+    if (cat === categoriaActiva) return;
+    setLoading(true);
+    setCategoriaActiva(cat);
+    setTimeout(() => setLoading(false), 400);
+  };
 
   const agregarAlCarrito = (producto) => {
     setCarrito((prev) => {
@@ -97,7 +125,7 @@ export default function Menu() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-800 font-sans pb-20">
+    <div className="min-h-screen bg-espresso-900 font-body pb-24">
       <Navbar
         cartCount={totalItems}
         onOpenCart={() => setMostrarCarrito(true)}
@@ -105,22 +133,40 @@ export default function Menu() {
         setBusqueda={setBusqueda}
         onOpenInfo={() => setMostrarInfo(true)}
       />
-      <HeroBanner info={INFO_TIENDA} />
       <CategoriasNav
         categorias={categoriasBD.filter(c => c !== 'Todas')}
         categoriaActiva={categoriaActiva}
-        onSelectCategoria={setCategoriaActiva}
+        onSelectCategoria={selectCat}
       />
-      {busqueda && (
-        <div className="max-w-6xl mx-auto px-4 mb-4 text-xs text-stone-500">
-          Resultados para: <span className="font-bold text-stone-800">"{busqueda}"</span> ({productosFiltrados.length})
-        </div>
-      )}
-      <ProductGrid
-        productos={productosFiltrados}
-        onAgregar={agregarAlCarrito}
-        onVerDetalle={(producto) => setProductoSeleccionado(producto)}
-      />
+      
+      <main className="mx-auto max-w-6xl px-4 pt-6">
+        {busqueda && (
+          <div className="mb-4 text-xs text-parchment-muted">
+            Resultados para: <span className="font-bold text-parchment">"{busqueda}"</span> ({productosFiltrados.length})
+          </div>
+        )}
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : productosFiltrados.length === 0 ? (
+          <div className="flex min-h-80 flex-col items-center justify-center text-center">
+            <Package className="mb-4 h-14 w-14 text-parchment-muted opacity-40" strokeWidth={1.3} />
+            <h2 className="font-display text-xl font-semibold text-parchment">Nada por aquí todavía</h2>
+            <p className="mt-2 max-w-xs text-sm text-parchment-muted">No se encontraron productos en esta categoría.</p>
+          </div>
+        ) : (
+          <ProductGrid
+            productos={productosFiltrados}
+            onAgregar={agregarAlCarrito}
+            onVerDetalle={(producto) => setProductoSeleccionado(producto)}
+          />
+        )}
+      </main>
+
       <CartModal
         mostrar={mostrarCarrito}
         onCerrar={() => setMostrarCarrito(false)}

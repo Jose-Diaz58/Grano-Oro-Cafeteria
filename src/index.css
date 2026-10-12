@@ -1,1 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --color-espresso-950: #1c120c;
+  --color-espresso-900: #f4eee5;
+  --color-espresso-800: #ede3d5;
+  --color-espresso-700: #fffdf8;
+  --color-espresso-600: #e8ddcf;
+  --color-espresso-500: #cdbca6;
+  --color-espresso-400: #a98f70;
+  --color-espresso-300: #6f5944;
+  --color-gold-600: #7d541c;
+  --color-gold-500: #a8752d;
+  --color-gold-400: #c28b3c;
+  --color-parchment: #21140d;
+  --color-parchment-dim: #4d3a2c;
+  --color-parchment-muted: #796653;
+  --color-success: #587047;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--font-body); }
+body {
+  background-color: var(--color-espresso-900);
+  color: var(--color-parchment);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+}
+
+.font-display { font-family: var(--font-display); }
+
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+@keyframes cartBump {
+  0%, 100% { transform: scale(1); }
+  40%       { transform: scale(1.35); }
+  70%       { transform: scale(0.88); }
+}
+.cart-bump { animation: cartBump 0.4s ease-out; }
+
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-espresso-600) 0%, var(--color-espresso-500) 50%, var(--color-espresso-600) 100%);
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}

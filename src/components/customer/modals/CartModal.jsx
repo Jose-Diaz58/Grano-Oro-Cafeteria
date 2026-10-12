@@ -1,160 +1,136 @@
-import React, { useState } from 'react';
+import React from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Trash2, Minus, Plus, ShoppingCart, ShoppingBag } from 'lucide-react';
 
-export default function CartModal({
-  mostrar,
-  onCerrar,
-  carrito,
-  totalPrecio,
-  onEnviarPedido,
-  onIncrementar,
-  onDecrementar,
-  onEliminar,
+export default function CartModal({ 
+  mostrar, onCerrar, carrito, totalPrecio, onEnviarPedido, 
+  onIncrementar, onDecrementar, onEliminar 
 }) {
-  const [nombreCliente, setNombreCliente] = useState('');
-  const [ubicacion, setUbicacion] = useState('');
-  const [notas, setNotas] = useState('');
-
-  if (!mostrar) return null;
-
-  const handleEnviar = (e) => {
-    e.preventDefault();
-    onEnviarPedido({ nombreCliente, ubicacion, notas });
-  };
+  const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end">
-      <div className="bg-white w-full max-w-md h-full p-6 flex flex-col justify-between shadow-xl overflow-y-auto">
-        <div>
-          {/* Header Modal */}
-          <div className="flex justify-between items-center mb-4 border-b pb-3">
-            <h3 className="text-lg font-bold font-serif text-stone-900">Tu Pedido</h3>
-            <button
-              onClick={onCerrar}
-              className="text-stone-400 hover:text-stone-600 font-bold text-xl p-1"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Lista de Productos */}
-          {carrito.length === 0 ? (
-            <div className="text-center py-12">
-              <span className="text-4xl block mb-2">🛒</span>
-              <p className="text-stone-500 text-sm">Tu carrito está vacío.</p>
-              <p className="text-stone-400 text-xs mt-1">¡Elige algo rico del menú!</p>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
-                {carrito.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center border-b pb-3 pt-1">
-                    <div className="flex-1 pr-2">
-                      <h4 className="font-bold text-sm text-stone-800">{item.nombre}</h4>
-                      <p className="text-xs text-amber-700 font-bold">${item.precio} c/u</p>
+    <Dialog.Root open={mostrar} onOpenChange={(open) => !open && onCerrar()}>
+      <AnimatePresence>
+        {mostrar && (
+          <Dialog.Portal forceMount>
+            <Dialog.Overlay asChild>
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              />
+            </Dialog.Overlay>
+            
+            <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+              <Dialog.Content asChild>
+                <motion.div
+                  initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                  transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+                  className="pointer-events-auto relative flex h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl border border-b-0 border-espresso-500 bg-espresso-900 sm:h-[85vh] sm:max-w-lg sm:rounded-2xl sm:border-b"
+                >
+                  {/* Header del Carrito */}
+                  <header className="flex shrink-0 items-center justify-between border-b border-espresso-600 bg-espresso-900/90 px-4 py-4 backdrop-blur-xl">
+                    <div>
+                      <Dialog.Title className="font-display text-xl font-semibold text-parchment">Tu Carrito</Dialog.Title>
+                      <p className="text-sm text-parchment-muted">{totalItems} artículo{totalItems !== 1 && 's'}</p>
                     </div>
+                    <button 
+                      onClick={onCerrar}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-espresso-700 text-parchment-muted transition-colors hover:text-parchment focus:outline-none"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </header>
 
-                    {/* Controles de Cantidad */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center border border-stone-200 rounded-lg overflow-hidden bg-stone-50">
-                        <button
-                          onClick={() => onDecrementar(item.id)}
-                          className="px-2 py-1 text-stone-600 hover:bg-stone-200 font-bold text-xs"
-                        >
-                          -
-                        </button>
-                        <span className="px-3 text-xs font-bold text-stone-800">
-                          {item.cantidad}
-                        </span>
-                        <button
-                          onClick={() => onIncrementar(item.id)}
-                          className="px-2 py-1 text-stone-600 hover:bg-stone-200 font-bold text-xs"
-                        >
-                          +
+                  {/* Lista de Productos */}
+                  <div className="scrollbar-hide flex-1 overflow-y-auto px-4 py-5">
+                    {carrito.length === 0 ? (
+                      <div className="flex h-full flex-col items-center justify-center text-center opacity-80">
+                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-espresso-500 bg-espresso-700">
+                          <ShoppingCart className="h-8 w-8 text-parchment-muted" />
+                        </div>
+                        <h3 className="font-display text-xl font-semibold text-parchment">Tu carrito está vacío</h3>
+                        <p className="mt-2 text-sm text-parchment-muted">Agrega un delicioso café o platillo para comenzar.</p>
+                        <button onClick={onCerrar} className="mt-6 rounded-xl bg-gold-500 px-6 py-3 text-sm font-semibold text-espresso-950 transition-colors hover:bg-gold-400">
+                          Explorar Menú
                         </button>
                       </div>
+                    ) : (
+                      <div className="space-y-4 pb-8">
+                        {carrito.map((item) => {
+                          const id = item._id || item.id;
+                          return (
+                            <div key={id} className="relative overflow-hidden rounded-2xl bg-red-600">
+                              <div className="absolute inset-y-0 right-0 flex w-24 items-center justify-center text-white" aria-hidden="true">
+                                <Trash2 className="h-6 w-6" />
+                              </div>
+                              <motion.div 
+                                drag="x" 
+                                dragConstraints={{ left: -96, right: 0 }} 
+                                dragElastic={0.1}
+                                onDragEnd={(_, info) => {
+                                  if (info.offset.x < -70 || info.velocity.x < -500) {
+                                    onEliminar(id);
+                                  }
+                                }}
+                                className="relative flex items-center gap-3 rounded-2xl border border-espresso-500 bg-espresso-700 p-4"
+                              >
+                                <img src={item.imagen} alt={item.nombre} className="h-14 w-14 shrink-0 rounded-xl bg-espresso-600 object-cover" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex justify-between gap-2">
+                                    <p className="truncate text-sm font-medium leading-snug text-parchment">{item.nombre}</p>
+                                    <button onClick={() => onEliminar(id)} className="shrink-0 p-1 text-parchment-muted transition-colors hover:text-red-400 sm:hidden">
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                  <p className="mt-0.5 text-sm font-semibold text-gold-500">${item.precio * item.cantidad}</p>
+                                </div>
 
-                      <button
-                        onClick={() => onEliminar(item.id)}
-                        className="text-stone-400 hover:text-red-500 text-xs p-1"
-                        title="Eliminar"
-                      >
-                        🗑️
-                      </button>
-                    </div>
+                                <div className="flex shrink-0 items-center rounded-xl border border-espresso-500 bg-espresso-600">
+                                  <button onClick={() => onDecrementar(id)} className="flex h-10 w-10 items-center justify-center rounded-xl text-parchment-dim transition-colors hover:bg-espresso-500 hover:text-parchment focus:outline-none">
+                                    <Minus className="h-4 w-4" strokeWidth={2.5} />
+                                  </button>
+                                  <span className="w-8 select-none text-center text-sm font-semibold text-parchment">{item.cantidad}</span>
+                                  <button onClick={() => onIncrementar(id)} className="flex h-10 w-10 items-center justify-center rounded-xl text-parchment-dim transition-colors hover:bg-espresso-500 hover:text-parchment focus:outline-none">
+                                    <Plus className="h-4 w-4" strokeWidth={2.5} />
+                                  </button>
+                                </div>
+                              </motion.div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
 
-              {/* Formulario de Datos para la Entrega */}
-              <form onSubmit={handleEnviar} className="mt-6 space-y-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
-                <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wider">
-                  Datos de Entrega / Recolección
-                </h4>
-
-                <div>
-                  <label className="block text-xs font-medium text-stone-600 mb-1">
-                    Tu Nombre *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. Juan Pérez"
-                    value={nombreCliente}
-                    onChange={(e) => setNombreCliente(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-amber-500 bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-stone-600 mb-1">
-                    Mesa o Salón Tec
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Mesa 4"
-                    value={ubicacion}
-                    onChange={(e) => setUbicacion(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-amber-500 bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-stone-600 mb-1">
-                    Notas adicionales (opcional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Sin cebolla, poco picante..."
-                    value={notas}
-                    onChange={(e) => setNotas(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-amber-500 bg-white"
-                  />
-                </div>
-              </form>
-            </>
-          )}
-        </div>
-
-        {/* Footer / Enviar WhatsApp */}
-        <div className="border-t pt-4 mt-4">
-          <div className="flex justify-between items-center mb-4">
-            <span className="font-bold text-stone-700">Total:</span>
-            <span className="text-xl font-extrabold text-amber-700">${totalPrecio} MXN</span>
-          </div>
-
-          <button
-            onClick={handleEnviar}
-            disabled={carrito.length === 0}
-            className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-              carrito.length > 0
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md cursor-pointer'
-                : 'bg-stone-200 text-stone-400 cursor-not-allowed'
-            }`}
-          >
-            <span>📱 Enviar Pedido por WhatsApp</span>
-          </button>
-        </div>
-      </div>
-    </div>
+                  {/* Footer / Checkout */}
+                  {carrito.length > 0 && (
+                    <div className="shrink-0 border-t border-espresso-600 bg-espresso-900/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
+                      <div className="mx-auto flex max-w-lg items-center gap-4">
+                        <div>
+                          <p className="text-xs text-parchment-muted">Total a pagar</p>
+                          <p className="text-xl font-bold leading-tight text-gold-500">${totalPrecio}</p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            // Envia el pedido vacío asumiendo "Para Llevar" por defecto como MVP. 
+                            // Más adelante se conectará el selector de servicio completo.
+                            onEnviarPedido({ nombreCliente: 'Cliente', ubicacion: '', notas: '' });
+                          }} 
+                          className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-gold-500 text-base font-semibold text-espresso-950 transition-transform active:scale-[0.98] hover:bg-gold-400 focus:outline-none"
+                        >
+                          <ShoppingBag className="h-5 w-5" />
+                          Confirmar Pedido
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </Dialog.Content>
+            </div>
+          </Dialog.Portal>
+        )}
+      </AnimatePresence>
+    </Dialog.Root>
   );
 }
