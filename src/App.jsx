@@ -1,6 +1,6 @@
 import React from 'react';
 import { Toaster } from 'sonner';
-import Menu from './pages/customer/Menu';
+import Menu from '../src/pages/Customer/Menu'
 
 export default function App() {
   return (

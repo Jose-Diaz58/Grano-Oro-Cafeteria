@@ -9,7 +9,6 @@ import InfoModal from '../../components/customer/modals/InfoModal';
 import ProductDetailModal from '../../components/customer/modals/ProductDetailModal';
 import { Package } from 'lucide-react';
 
-// Componente auxiliar de Skeleton idéntico al de Figma
 function SkeletonCard() {
   return (
     <div className="rounded-2xl overflow-hidden bg-espresso-700 border border-espresso-500">
@@ -33,8 +32,7 @@ export default function Menu() {
   const [mostrarInfo, setMostrarInfo] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   
-  // Estado de carga inicializado en true para mostrar los skeletons al abrir
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -54,7 +52,6 @@ export default function Menu() {
     cargarDatos();
   }, []);
 
-  // Función al cambiar de categoría con animación de carga simulada breve si se desea
   const selectCat = (cat) => {
     if (cat === categoriaActiva) return;
     setLoading(true);
