@@ -5,6 +5,6 @@ export const INFO_TIENDA = {
   slogan: "Momentos que saben a oro",
   whatsapp: "9161095929",
   empaqueEcologico: true,
-  logoUrl: "/assets/logo-grano-de-oro.png",
+  logoUrl: "/xd.png",
   logoTecUrl: "/assets/logo-tec-los-rios.png"
 };

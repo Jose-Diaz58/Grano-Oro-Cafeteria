@@ -25,24 +25,30 @@ export default function InfoModal({ mostrar, onCerrar, info }) {
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   className="pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl border border-espresso-500 bg-espresso-700 shadow-2xl"
                 >
-                  {/* Cabecera */}
-                  <div className="border-b border-espresso-600 bg-espresso-800/50 px-6 py-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Dialog.Title className="font-display text-xl font-bold text-parchment">
-                          {info.nombre}
-                        </Dialog.Title>
-                        <p className="mt-1 text-xs font-medium uppercase tracking-widest text-gold-500">
-                          {info.sucursal}
-                        </p>
-                      </div>
-                      <button
-                        onClick={onCerrar}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-espresso-600 text-parchment-muted transition-colors hover:bg-espresso-500 hover:text-parchment focus:outline-none"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                  {/* Cabecera con fondo blanco para integrar el Logo perfectamente */}
+                  <div className="relative flex flex-col items-center justify-center bg-white p-6 pt-8 border-b border-espresso-500">
+                    <button
+                      onClick={onCerrar}
+                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-espresso-800 text-parchment-muted hover:bg-espresso-600 hover:text-parchment transition-colors focus:outline-none z-10"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+
+                    {/* Contenedor e imagen sin recortes (object-contain) */}
+                    <div className="h-36 w-full flex items-center justify-center">
+                      <img 
+                        src={info.logoUrl} 
+                        alt={info.nombre} 
+                        className="h-full w-auto object-contain" 
+                      />
                     </div>
+
+                    <Dialog.Title className="mt-3 font-display text-xl font-bold text-espresso-950 text-center">
+                      {info.nombre}
+                    </Dialog.Title>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gold-600 text-center mt-0.5">
+                      {info.sucursal}
+                    </p>
                   </div>
 
                   {/* Contenido */}

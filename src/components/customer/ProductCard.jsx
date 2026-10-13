@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Info, Plus, Check } from 'lucide-react';
+import { Info, Plus, Check, Coffee } from 'lucide-react';
 
 export default function ProductCard({ producto, onAgregar, onVerDetalle }) {
   const [justAdded, setJustAdded] = useState(false);
+  
+  // Estados independientes para la carga de la imagen de este producto
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
-  // Manejar el clic para dar feedback visual sin bloquear la UI
   const handleAdd = (e) => {
     e.stopPropagation();
     if (producto.disponible === false) return;
@@ -31,15 +34,36 @@ export default function ProductCard({ producto, onAgregar, onVerDetalle }) {
     >
       {/* Contenedor de Imagen */}
       <div className="relative h-44 overflow-hidden bg-espresso-600">
-        <img
-          src={producto.imagen}
-          alt={producto.nombre}
-          className={`h-full w-full object-cover transition-transform duration-500 ${
-            disponible ? 'group-hover:scale-[1.04]' : 'grayscale'
-          }`}
-        />
+        {/* Skeleton animado visible MIENTRAS la foto descarga */}
+        {imageLoading && !imageError && (
+          <div className="absolute inset-0 skeleton z-10" />
+        )}
+
+        {/* Si la URL falla o no carga la imagen, mostramos un diseño elegante en lugar del icono roto */}
+        {imageError ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-espresso-800 text-parchment-muted">
+            <Coffee className="h-8 w-8 opacity-40" />
+            <span className="text-[11px] font-medium tracking-wide">Error al Cargar</span>
+          </div>
+        ) : (
+          <img
+            src={producto.imagen}
+            alt={producto.nombre}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageLoading(false);
+              setImageError(true);
+            }}
+            className={`h-full w-full object-cover transition-opacity duration-300 ${
+              imageLoading ? 'opacity-0' : 'opacity-100'
+            } ${
+              disponible ? 'group-hover:scale-[1.04]' : 'grayscale'
+            }`}
+          />
+        )}
+
         {!disponible && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
             <span className="rounded-full border border-espresso-500 bg-espresso-950/90 px-3 py-1.5 text-[11px] font-medium uppercase tracking-widest text-parchment-muted">
               Agotado
             </span>
@@ -50,7 +74,7 @@ export default function ProductCard({ producto, onAgregar, onVerDetalle }) {
         {justAdded && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 flex items-center justify-center bg-gold-500/20"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-gold-500/20"
           >
             <motion.div 
               initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500 }}
