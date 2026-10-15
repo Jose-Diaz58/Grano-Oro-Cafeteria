@@ -13,9 +13,15 @@ export default function ProductCard({ producto, onAgregar, onVerDetalle }) {
     e.stopPropagation();
     if (producto.disponible === false) return;
     
-    onAgregar(producto);
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1200);
+    // NUEVO: Si el producto tiene variantes, abrimos el modal de detalle para que elija
+    if (producto.variantes && producto.variantes.length > 0) {
+      onVerDetalle(producto);
+    } else {
+      // Si no tiene variantes (ej. un café normal), lo agrega directamente
+      onAgregar(producto);
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 1200);
+    }
   };
 
   const disponible = producto.disponible !== false;

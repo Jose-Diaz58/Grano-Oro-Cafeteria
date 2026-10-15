@@ -47,27 +47,30 @@ export default function CartModal({ mostrar, onCerrar }) {
       const orderData = {
         cliente: nombreCliente.trim(),
         tipoServicio: tipoServicio === 'comer_aqui' ? 'Comer Aquí' : 'Para Llevar',
-        mesa: numeroMesa || 'N/A', // Mejor enviar 'N/A' que un string vacío si es para llevar
+        mesa: numeroMesa || 'N/A', 
         notas: notasAdicionales.trim(),
-        estado: 'Nuevo', // <--- AGREGA ESTA LÍNEA
+        estado: 'Nuevo',
         productos: carrito.map(item => ({
-        productoId: item._id || item.id,
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        precio: item.precio
+          productoId: item._id || item.id, // ID original del producto para MongoDB
+          nombre: item.nombre,
+          variante: item.variante || '', // Enviamos la variante a la base de datos
+          cantidad: item.cantidad,
+          precio: item.precio
         })),
-      total: totalPrecio
+        total: totalPrecio
       };
 
       // 2. Guardar en MongoDB y obtener respuesta del backend
       const pedidoGuardado = await createOrder(orderData);
       
-      // Obtener el folio real de la BD (asumiendo que el backend lo regresa, o generamos un ID corto de respaldo)
       const folioReal = pedidoGuardado.folio || pedidoGuardado._id?.substring(pedidoGuardado._id.length - 6).toUpperCase() || 'GOC-EN-SITIO';
 
-      // 3. Preparar mensaje para WhatsApp
+      // 3. Preparar mensaje para WhatsApp incluyendo la variante
       const listaProductosTexto = carrito
-        .map((item) => `    ${item.cantidad}x ${item.nombre} - $${(item.precio * item.cantidad).toFixed(2)} MXN`)
+        .map((item) => {
+          const nombreVar = item.variante ? `${item.nombre} (${item.variante})` : item.nombre;
+          return `    ${item.cantidad}x ${nombreVar} - $${(item.precio * item.cantidad).toFixed(2)} MXN`;
+        })
         .join('\n');
 
       const servicioTexto = tipoServicio === 'comer_aqui' 
@@ -171,12 +174,15 @@ ${listaProductosTexto}
                       ) : (
                         <div className="space-y-4 pb-8">
                           {carrito.map((item) => {
-                            const id = item._id || item.id;
+                            // Utilizamos el cartItemId de Zustand para las operaciones
+                            const id = item.cartItemId;
                             return (
                               <div key={id} className="relative overflow-hidden rounded-2xl bg-espresso-700 border border-espresso-500 p-4 flex items-center gap-3">
                                 <img src={item.imagen} alt={item.nombre} className="h-14 w-14 shrink-0 rounded-xl bg-espresso-600 object-cover" />
                                 <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-medium leading-snug text-parchment">{item.nombre}</p>
+                                  <p className="truncate text-sm font-medium leading-snug text-parchment">
+                                    {item.nombre} {item.variante && <span className="text-gold-400">({item.variante})</span>}
+                                  </p>
                                   <p className="mt-0.5 text-sm font-semibold text-gold-500">${item.precio * item.cantidad}</p>
                                 </div>
                                 <div className="flex shrink-0 items-center rounded-xl border border-espresso-500 bg-espresso-600">

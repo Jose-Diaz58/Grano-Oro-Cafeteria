@@ -25,8 +25,11 @@ export default function Checkout({ carrito = [], total = 0, onVolver }) {
 
     // Formatear la lista de productos
     const listaProductosTexto = carrito
-      .map((item) => `- ${item.cantidad} x ${item.nombre} ($${(item.precio * item.cantidad).toFixed(2)})`)
-      .join('\n');
+  .map((item) => {
+    const nombreVar = item.variante ? `${item.nombre} (${item.variante})` : item.nombre;
+    return `- ${item.cantidad} x ${nombreVar} ($${(item.precio * item.cantidad).toFixed(2)})`;
+  })
+  .join('\n');
 
     // Determinar la opción de servicio
     const servicioTexto = tipoServicio === 'comer_aqui' 

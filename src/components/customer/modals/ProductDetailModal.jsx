@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 
 export default function ProductDetailModal({ producto, onCerrar, onAgregar }) {
+  // Estado para guardar la variante que elige el cliente
+  const [varianteSeleccionada, setVarianteSeleccionada] = useState('');
+
+  // Seleccionar la primera variante por defecto cuando se abre el modal
+  useEffect(() => {
+    if (producto && producto.variantes && producto.variantes.length > 0) {
+      setVarianteSeleccionada(producto.variantes[0]);
+    } else {
+      setVarianteSeleccionada('');
+    }
+  }, [producto]);
+
+  const handleAgregar = () => {
+    // Pasamos el producto y la variante elegida
+    onAgregar(producto, varianteSeleccionada);
+    onCerrar();
+  };
+
   return (
     <Dialog.Root open={!!producto} onOpenChange={(open) => !open && onCerrar()}>
       <AnimatePresence>
@@ -58,14 +76,36 @@ export default function ProductDetailModal({ producto, onCerrar, onAgregar }) {
                     <Dialog.Description id="product-desc" className="text-sm leading-relaxed text-parchment-muted">
                       {producto.descripcion}
                     </Dialog.Description>
+
+                    {/* NUEVA SECCIÓN: Selector de Variantes */}
+                    {producto.variantes && producto.variantes.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="text-sm font-semibold text-gold-400 mb-3">Elige una opción:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {producto.variantes.map((variante) => (
+                            <button
+                              key={variante}
+                              onClick={() => setVarianteSeleccionada(variante)}
+                              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all focus:outline-none ${
+                                varianteSeleccionada === variante 
+                                  ? 'bg-gold-500 text-espresso-950 border-gold-500 shadow-md' 
+                                  : 'bg-espresso-800 text-parchment border-espresso-600 hover:border-gold-500/50 hover:bg-espresso-700'
+                              }`}
+                            >
+                              {variante}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Sticky Footer */}
                   <div className="shrink-0 border-t border-espresso-600 bg-espresso-700 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                     <motion.button
                       whileTap={{ scale: 0.96 }}
-                      onClick={() => { onAgregar(producto); onCerrar(); }}
-                      className="flex h-12 w-full items-center justify-center rounded-xl bg-gold-500 font-semibold text-espresso-950 transition-colors hover:bg-gold-400 focus:outline-none"
+                      onClick={handleAgregar}
+                      className="flex h-12 w-full items-center justify-center rounded-xl bg-gold-500 font-semibold text-espresso-950 transition-colors hover:bg-gold-400 focus:outline-none shadow-lg"
                     >
                       Añadir al carrito
                     </motion.button>

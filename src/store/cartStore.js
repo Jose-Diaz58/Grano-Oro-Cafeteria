@@ -1,4 +1,3 @@
-// src/store/cartStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -7,50 +6,63 @@ export const useCartStore = create(
     (set, get) => ({
       carrito: [],
       
-      agregarAlCarrito: (producto) => {
+      // Actualizado para recibir la variante seleccionada
+      agregarAlCarrito: (producto, varianteSeleccionada = null) => {
         const { carrito } = get();
         const idProd = producto._id || producto.id;
-        const existe = carrito.find((item) => (item._id || item.id) === idProd);
+        
+        // Creamos un ID único para el carrito: ID_PRODUCTO + VARIANTE (ej. 64a2b9-Rojos)
+        const cartItemId = varianteSeleccionada ? `${idProd}-${varianteSeleccionada}` : idProd;
+        
+        const existe = carrito.find((item) => item.cartItemId === cartItemId);
         
         if (existe) {
           set({
             carrito: carrito.map((item) =>
-              (item._id || item.id) === idProd ? { ...item, cantidad: item.cantidad + 1 } : item
+              item.cartItemId === cartItemId ? { ...item, cantidad: item.cantidad + 1 } : item
             ),
           });
         } else {
-          set({ carrito: [...carrito, { ...producto, cantidad: 1 }] });
+          set({ 
+            carrito: [...carrito, { 
+              ...producto, 
+              cartItemId, // Usamos este nuevo ID para identificar la variante exacta en el carrito
+              variante: varianteSeleccionada,
+              cantidad: 1 
+            }] 
+          });
         }
       },
       
-      incrementarCantidad: (id) => {
+      // Funciones actualizadas para buscar por cartItemId
+      incrementarCantidad: (cartItemId) => {
         set({
           carrito: get().carrito.map((item) =>
-            (item._id || item.id) === id ? { ...item, cantidad: item.cantidad + 1 } : item
+            item.cartItemId === cartItemId ? { ...item, cantidad: item.cantidad + 1 } : item
           ),
         });
       },
       
-      decrementarCantidad: (id) => {
+      decrementarCantidad: (cartItemId) => {
         set({
           carrito: get().carrito
             .map((item) =>
-              (item._id || item.id) === id ? { ...item, cantidad: item.cantidad - 1 } : item
+              item.cartItemId === cartItemId ? { ...item, cantidad: item.cantidad - 1 } : item
             )
             .filter((item) => item.cantidad > 0),
         });
       },
       
-      eliminarDelCarrito: (id) => {
+      eliminarDelCarrito: (cartItemId) => {
         set({
-          carrito: get().carrito.filter((item) => (item._id || item.id) !== id),
+          carrito: get().carrito.filter((item) => item.cartItemId !== cartItemId),
         });
       },
       
       limpiarCarrito: () => set({ carrito: [] }),
     }),
     {
-      name: 'grano-de-oro-cart', // Nombre en localStorage
+      name: 'grano-de-oro-cart',
     }
   )
 );
