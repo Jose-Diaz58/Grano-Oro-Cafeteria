@@ -8,6 +8,8 @@ import CartModal from '../../components/customer/modals/CartModal';
 import InfoModal from '../../components/customer/modals/InfoModal';
 import ProductDetailModal from '../../components/customer/modals/ProductDetailModal';
 import { Package } from 'lucide-react';
+import { useCartStore } from '../../store/cartStore';
+import SplashScreen from '../../components/customer/SplashScreen';
 
 function SkeletonCard() {
   return (
@@ -27,28 +29,45 @@ export default function Menu() {
   const [categoriasBD, setCategoriasBD] = useState([]);
   const [categoriaActiva, setCategoriaActiva] = useState('Todas');
   const [busqueda, setBusqueda] = useState('');
-  const [carrito, setCarrito] = useState([]);
+  
   const [mostrarCarrito, setMostrarCarrito] = useState(false);
   const [mostrarInfo, setMostrarInfo] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   
-const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Zustand para estado global del carrito
+  const { carrito, agregarAlCarrito } = useCartStore();
+  const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        const productosData = await getProducts();
-        setProductosBD(productosData);
-        
-        const categoriasUnicas = ['Todas', ...new Set(productosData.map(p => p.categoria))];
-        setCategoriasBD(categoriasUnicas);
+
+        // 1. Promesa 1: Temporizador estricto de 1000ms (1 segundo)
+        const tiempoMinimo = new Promise(resolve => setTimeout(resolve, 1700));
+
+        // 2. Promesa 2: Tu llamada real a la base de datos
+        const peticionAPI = getProducts().then(productosData => {
+          setProductosBD(productosData);
+          const categoriasUnicas = ['Todas', ...new Set(productosData.map(p => p.categoria))];
+          setCategoriasBD(categoriasUnicas);
+        });
+
+        // 3. Ejecutar ambas al mismo tiempo y esperar a que la MÁS LENTA termine
+        await Promise.all([tiempoMinimo, peticionAPI]);
+
       } catch (error) {
         console.error('Error al cargar datos:', error);
       } finally {
+        // Cuando pasan los 2 segundos Y los datos ya cargaron, quitamos la pantalla
+        setShowSplash(false); 
         setLoading(false);
       }
     };
+    
     cargarDatos();
   }, []);
 
@@ -59,40 +78,6 @@ const [loading, setLoading] = useState(false);
     setTimeout(() => setLoading(false), 400);
   };
 
-  const agregarAlCarrito = (producto) => {
-    setCarrito((prev) => {
-      const idProd = producto._id || producto.id;
-      const existe = prev.find((item) => (item._id || item.id) === idProd);
-      if (existe) {
-        return prev.map((item) =>
-          (item._id || item.id) === idProd ? { ...item, cantidad: item.cantidad + 1 } : item
-        );
-      }
-      return [...prev, { ...producto, cantidad: 1 }];
-    });
-  };
-
-  const incrementarCantidad = (id) => {
-    setCarrito((prev) =>
-      prev.map((item) => (item._id || item.id) === id ? { ...item, cantidad: item.cantidad + 1 } : item)
-    );
-  };
-
-  const decrementarCantidad = (id) => {
-    setCarrito((prev) =>
-      prev
-        .map((item) => (item._id || item.id) === id ? { ...item, cantidad: item.cantidad - 1 } : item)
-        .filter((item) => item.cantidad > 0)
-    );
-  };
-
-  const eliminarDelCarrito = (id) => {
-    setCarrito((prev) => prev.filter((item) => (item._id || item.id) !== id));
-  };
-
-  const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-  const totalPrecio = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
-
   const productosFiltrados = productosBD.filter((prod) => {
     const coincideCategoria = categoriaActiva === 'Todas' || prod.categoria === categoriaActiva;
     const coincideBusqueda =
@@ -101,28 +86,10 @@ const [loading, setLoading] = useState(false);
     return coincideCategoria && coincideBusqueda;
   });
 
-  const enviarPedidoWhatsApp = ({ nombreCliente, ubicacion, notas }) => {
-    if (carrito.length === 0) return;
-    let mensaje = `*NUEVO PEDIDO - ${INFO_TIENDA.nombre.toUpperCase()}*\n`;
-    mensaje += `*Sucursal:* ${INFO_TIENDA.sucursal}\n`;
-    if (nombreCliente) mensaje += `*Cliente:* ${nombreCliente}\n`;
-    if (ubicacion) mensaje += `*Ubicación/Mesa:* ${ubicacion}\n`;
-    mensaje += `-----------------------------------\n\n`;
-    mensaje += `*DETALLE DEL PEDIDO:*\n`;
-    carrito.forEach((item) => {
-      mensaje += `- ${item.cantidad}x ${item.nombre} - $${item.precio * item.cantidad} MXN\n`;
-    });
-    mensaje += `\n-----------------------------------\n`;
-    mensaje += `*TOTAL: $${totalPrecio} MXN*\n`;
-    if (notas) mensaje += `*Notas:* ${notas}\n`;
-    mensaje += `*Nota adicional:* Empaque ecológico incluido\n`;
-    
-    const url = `https://wa.me/52${INFO_TIENDA.whatsapp}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
-  };
-
   return (
     <div className="min-h-screen bg-espresso-900 font-body pb-24">
+      <SplashScreen mostrar={showSplash} />
+
       <Navbar
         cartCount={totalItems}
         onOpenCart={() => setMostrarCarrito(true)}
@@ -167,13 +134,8 @@ const [loading, setLoading] = useState(false);
       <CartModal
         mostrar={mostrarCarrito}
         onCerrar={() => setMostrarCarrito(false)}
-        carrito={carrito}
-        totalPrecio={totalPrecio}
-        onEnviarPedido={enviarPedidoWhatsApp}
-        onIncrementar={incrementarCantidad}
-        onDecrementar={decrementarCantidad}
-        onEliminar={eliminarDelCarrito}
       />
+      
       <InfoModal
         mostrar={mostrarInfo}
         onCerrar={() => setMostrarInfo(false)}
