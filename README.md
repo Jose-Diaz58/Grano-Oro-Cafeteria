@@ -1,16 +1,15 @@
-# React + Vite
+# Grano de Oro Café
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Menú para clientes y panel de administración (React + Vite + Tailwind).
 
-Currently, two official plugins are available:
+## Uso
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev      # http://localhost:5173
+```
 
-## React Compiler
+La URL del API sale de `VITE_API_URL` (por defecto `http://localhost:4000/api`). Todas las peticiones están en `src/api.js`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Cliente: `/`
+- Admin: `/admin` (pedidos, catálogo, categorías, extras, configuración)

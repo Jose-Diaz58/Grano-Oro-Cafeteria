@@ -1,7 +1,6 @@
-import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, MapPin, Clock, Leaf, Phone } from 'lucide-react';
+import { X, MapPin, Clock, Leaf, Phone, Timer } from 'lucide-react';
 
 export default function InfoModal({ mostrar, onCerrar, info }) {
   return (
@@ -68,12 +67,20 @@ export default function InfoModal({ mostrar, onCerrar, info }) {
                       </div>
                       <div className="flex items-center gap-3 text-sm text-parchment-dim">
                         <Clock className="h-4 w-4 shrink-0 text-parchment-muted" />
-                        <span>Lun - Vie (7:00 AM - 5:00 PM)</span>
+                        <span>{info.dias ?? 'Lun - Vie'} ({info.horario ?? '7:00 AM - 5:00 PM'})</span>
                       </div>
-                      <div className="flex items-start gap-3 text-sm text-parchment-dim">
-                        <Leaf className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                        <span>Empaque ecológico incluido en todos los pedidos.</span>
-                      </div>
+                      {info.minutosPrep && (
+                        <div className="flex items-center gap-3 text-sm text-parchment-dim">
+                          <Timer className="h-4 w-4 shrink-0 text-parchment-muted" />
+                          <span>Preparación aprox. {Math.max(10, info.minutosPrep * 2 + 1)}–{Math.max(10, info.minutosPrep * 2 + 1) + 5} min</span>
+                        </div>
+                      )}
+                      {info.empaqueEcologico && (
+                        <div className="flex items-start gap-3 text-sm text-parchment-dim">
+                          <Leaf className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                          <span>Empaque ecológico incluido en todos los pedidos.</span>
+                        </div>
+                      )}
                     </div>
 
                     <button

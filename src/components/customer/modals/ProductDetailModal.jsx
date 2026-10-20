@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 export default function ProductDetailModal({ producto, onCerrar, onAgregar }) {
   // Estado para guardar la variante que elige el cliente
   const [varianteSeleccionada, setVarianteSeleccionada] = useState('');
+  const [extrasSel, setExtrasSel] = useState([]); // ids de los extras marcados
 
   // Seleccionar la primera variante por defecto cuando se abre el modal
   useEffect(() => {
@@ -14,11 +15,19 @@ export default function ProductDetailModal({ producto, onCerrar, onAgregar }) {
     } else {
       setVarianteSeleccionada('');
     }
+    setExtrasSel([]);
   }, [producto]);
+
+  const extrasDisponibles = producto?.extras ?? [];
+  const elegidos = extrasDisponibles.filter((e) => extrasSel.includes(e._id));
+  const precioFinal = (producto?.precio ?? 0) + elegidos.reduce((s, e) => s + e.precio, 0);
+
+  const alternarExtra = (id) =>
+    setExtrasSel((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handleAgregar = () => {
     // Pasamos el producto y la variante elegida
-    onAgregar(producto, varianteSeleccionada);
+    onAgregar(producto, varianteSeleccionada, elegidos);
     onCerrar();
   };
 
@@ -67,7 +76,7 @@ export default function ProductDetailModal({ producto, onCerrar, onAgregar }) {
                       <Dialog.Title className="font-display text-2xl font-bold text-white drop-shadow-md">
                         {producto.nombre}
                       </Dialog.Title>
-                      <p className="text-lg font-bold text-gold-400 drop-shadow-md">${producto.precio}</p>
+                      <p className="text-lg font-bold text-gold-400 drop-shadow-md">${precioFinal}</p>
                     </div>
                   </div>
 
@@ -98,6 +107,36 @@ export default function ProductDetailModal({ producto, onCerrar, onAgregar }) {
                         </div>
                       </div>
                     )}
+
+                    {/* Extras globales configurados por el administrador */}
+                    {extrasDisponibles.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="text-sm font-semibold text-gold-400 mb-3">Agrega extras:</h4>
+                        <div className="space-y-2">
+                          {extrasDisponibles.map((extra) => (
+                            <label
+                              key={extra._id}
+                              className={`flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm transition-all ${
+                                extrasSel.includes(extra._id)
+                                  ? 'border-gold-500 bg-gold-500/10'
+                                  : 'border-espresso-600 bg-espresso-800 hover:border-gold-500/50'
+                              }`}
+                            >
+                              <span className="flex items-center gap-3 text-parchment">
+                                <input
+                                  type="checkbox"
+                                  checked={extrasSel.includes(extra._id)}
+                                  onChange={() => alternarExtra(extra._id)}
+                                  className="h-4 w-4 accent-gold-500"
+                                />
+                                {extra.nombre}
+                              </span>
+                              <span className="font-semibold text-gold-400">+${extra.precio}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Sticky Footer */}
@@ -107,7 +146,7 @@ export default function ProductDetailModal({ producto, onCerrar, onAgregar }) {
                       onClick={handleAgregar}
                       className="flex h-12 w-full items-center justify-center rounded-xl bg-gold-500 font-semibold text-espresso-950 transition-colors hover:bg-gold-400 focus:outline-none shadow-lg"
                     >
-                      Añadir al carrito
+                      Añadir al carrito · ${precioFinal}
                     </motion.button>
                   </div>
                 </motion.div>

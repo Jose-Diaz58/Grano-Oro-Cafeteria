@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function CategoriasNav({ categorias, categoriaActiva, onSelectCategoria }) {
   // Aseguramos que "Todas" siempre esté al principio

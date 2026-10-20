@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { getProducts } from '../../api/productApi';
+import { useState, useEffect } from 'react';
+import { getProducts, getExtras, getConfig } from '../../api.js';
 import { INFO_TIENDA } from '../../data/mockData';
 import Navbar from '../../components/customer/Navbar';
 import CategoriasNav from '../../components/customer/CategoriasNav';
@@ -24,7 +24,15 @@ function SkeletonCard() {
   );
 }
 
+// "07:00" -> "7:00 AM"
+const formatearHora = (hhmm = '') => {
+  const [h, m] = hhmm.split(':').map(Number);
+  if (Number.isNaN(h)) return hhmm;
+  return `${h % 12 || 12}:${String(m || 0).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+};
+
 export default function Menu() {
+  const [config, setConfig] = useState(null); // configuración del admin (null = sin cargar)
   const [productosBD, setProductosBD] = useState([]);
   const [categoriasBD, setCategoriasBD] = useState([]);
   const [categoriaActiva, setCategoriaActiva] = useState('Todas');
@@ -50,14 +58,22 @@ export default function Menu() {
         const tiempoMinimo = new Promise(resolve => setTimeout(resolve, 1700));
 
         // 2. Promesa 2: Tu llamada real a la base de datos
-        const peticionAPI = getProducts().then(productosData => {
-          setProductosBD(productosData);
+        // Extras y configuración del admin: si fallan, el menú sigue funcionando sin ellos
+        const extrasPromesa = getExtras().catch(() => []);
+        const configPromesa = getConfig().then(setConfig).catch(() => {});
+
+        const peticionAPI = Promise.all([getProducts(), extrasPromesa]).then(([productosData, extrasData]) => {
+          // A cada producto le colgamos los extras globales que el admin le asignó
+          setProductosBD(productosData.map((prod) => ({
+            ...prod,
+            extras: extrasData.filter((ex) => (ex.productos || []).includes(prod._id)),
+          })));
           const categoriasUnicas = ['Todas', ...new Set(productosData.map(p => p.categoria))];
           setCategoriasBD(categoriasUnicas);
         });
 
         // 3. Ejecutar ambas al mismo tiempo y esperar a que la MÁS LENTA termine
-        await Promise.all([tiempoMinimo, peticionAPI]);
+        await Promise.all([tiempoMinimo, peticionAPI, configPromesa]);
 
       } catch (error) {
         console.error('Error al cargar datos:', error);
@@ -70,6 +86,23 @@ export default function Menu() {
     
     cargarDatos();
   }, []);
+
+  // Datos de la tienda: lo que guardó el admin; si no hay servidor, los valores de respaldo
+  const info = {
+    ...INFO_TIENDA,
+    ...(config && {
+      nombre: config.nombre,
+      sucursal: config.sucursal,
+      institucion: config.ubicacion,
+      slogan: config.eslogan,
+      whatsapp: config.whatsapp,
+      dias: config.dias,
+      horario: `${formatearHora(config.apertura)} - ${formatearHora(config.cierre)}`,
+      empaqueEcologico: config.ecologico,
+      minutosPrep: config.minutosPrep,
+      pausado: config.pausado,
+    }),
+  };
 
   const selectCat = (cat) => {
     if (cat === categoriaActiva) return;
@@ -96,6 +129,7 @@ export default function Menu() {
         busqueda={busqueda}
         setBusqueda={setBusqueda}
         onOpenInfo={() => setMostrarInfo(true)}
+        nombre={info.nombre}
       />
       <CategoriasNav
         categorias={categoriasBD.filter(c => c !== 'Todas')}
@@ -134,12 +168,13 @@ export default function Menu() {
       <CartModal
         mostrar={mostrarCarrito}
         onCerrar={() => setMostrarCarrito(false)}
+        info={info}
       />
       
       <InfoModal
         mostrar={mostrarInfo}
         onCerrar={() => setMostrarInfo(false)}
-        info={INFO_TIENDA}
+        info={info}
       />
       <ProductDetailModal
         producto={productoSeleccionado}

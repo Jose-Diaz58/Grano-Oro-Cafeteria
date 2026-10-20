@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { INFO_TIENDA } from '../../../data/mockData';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Trash2, Minus, Plus, ShoppingCart, ShoppingBag, ArrowLeft, Utensils, Loader2 } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
-import { createOrder } from '../../../api/ordenApi';
+import { createOrder } from '../../../api.js';
 
-export default function CartModal({ mostrar, onCerrar }) {
+export default function CartModal({ mostrar, onCerrar, info = INFO_TIENDA }) {
   // Consumimos el estado global desde Zustand
   const { carrito, incrementarCantidad, decrementarCantidad, eliminarDelCarrito, limpiarCarrito } = useCartStore();
   
@@ -23,8 +23,14 @@ export default function CartModal({ mostrar, onCerrar }) {
   const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
   const totalPrecio = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
 
+  const pausado = Boolean(info.pausado);
+
   const handleConfirmarPedido = async (e) => {
     e.preventDefault();
+    if (pausado) {
+      alert('Por el momento no estamos recibiendo pedidos. Intenta más tarde.');
+      return;
+    }
     if (!nombreCliente.trim()) {
       alert("Por favor ingresa tu nombre.");
       return;
@@ -54,6 +60,7 @@ export default function CartModal({ mostrar, onCerrar }) {
           productoId: item._id || item.id, // ID original del producto para MongoDB
           nombre: item.nombre,
           variante: item.variante || '', // Enviamos la variante a la base de datos
+          extras: (item.extras || []).map((x) => ({ nombre: x.nombre, precio: x.precio })),
           cantidad: item.cantidad,
           precio: item.precio
         })),
@@ -68,7 +75,8 @@ export default function CartModal({ mostrar, onCerrar }) {
       // 3. Preparar mensaje para WhatsApp incluyendo la variante
       const listaProductosTexto = carrito
         .map((item) => {
-          const nombreVar = item.variante ? `${item.nombre} (${item.variante})` : item.nombre;
+          const base = item.variante ? `${item.nombre} (${item.variante})` : item.nombre;
+          const nombreVar = item.extras?.length ? `${base} + ${item.extras.map((x) => x.nombre).join(', ')}` : base;
           return `    ${item.cantidad}x ${nombreVar} - $${(item.precio * item.cantidad).toFixed(2)} MXN`;
         })
         .join('\n');
@@ -77,10 +85,10 @@ export default function CartModal({ mostrar, onCerrar }) {
         ? `Comer aquí - Mesa ${numeroMesa}` 
         : `Para llevar / Pasaré a recoger`;
 
-      const notaTexto = notasAdicionales.trim() ? notasAdicionales.trim() : 'Empaque ecológico incluido';
+      const notaTexto = notasAdicionales.trim() ? notasAdicionales.trim() : (info.empaqueEcologico ? 'Empaque ecológico incluido' : 'Sin notas');
 
-      const mensajeWhatsApp = `*NUEVO PEDIDO - GRANO DE ORO CAFÉ*
-*Sucursal:* Sucursal Tec
+      const mensajeWhatsApp = `*NUEVO PEDIDO - ${info.nombre.toUpperCase()}*
+*Sucursal:* ${info.sucursal}
 *Cliente:* ${nombreCliente.trim()}
 *Folio:* ${folioReal}
 -----------------------------------
@@ -92,7 +100,7 @@ ${listaProductosTexto}
 *Servicio:* ${servicioTexto}
 *Nota adicional:* ${notaTexto}`;
 
-      const telefonoWhatsApp = `52${INFO_TIENDA.whatsapp}`;
+      const telefonoWhatsApp = `52${info.whatsapp}`;
       const url = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeWhatsApp)}`;
       
       // 4. Limpiar el carrito local, cerrar el modal y redirigir
@@ -159,6 +167,11 @@ ${listaProductosTexto}
 
                   {/* Cuerpo */}
                   <div className="scrollbar-hide flex-1 overflow-y-auto px-4 py-5">
+                    {pausado && (
+                      <p className="mb-4 rounded-xl border border-red-300 bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
+                        Por el momento no estamos recibiendo pedidos nuevos. Intenta de nuevo más tarde.
+                      </p>
+                    )}
                     {paso === 'carrito' ? (
                       carrito.length === 0 ? (
                         <div className="flex h-full flex-col items-center justify-center text-center opacity-80">
@@ -183,6 +196,9 @@ ${listaProductosTexto}
                                   <p className="truncate text-sm font-medium leading-snug text-parchment">
                                     {item.nombre} {item.variante && <span className="text-gold-400">({item.variante})</span>}
                                   </p>
+                                  {item.extras?.length > 0 && (
+                                    <p className="truncate text-xs text-parchment-muted">+ {item.extras.map((x) => x.nombre).join(', ')}</p>
+                                  )}
                                   <p className="mt-0.5 text-sm font-semibold text-gold-500">${item.precio * item.cantidad}</p>
                                 </div>
                                 <div className="flex shrink-0 items-center rounded-xl border border-espresso-500 bg-espresso-600">
@@ -315,7 +331,8 @@ ${listaProductosTexto}
                           </div>
                           <button 
                             onClick={() => setPaso('checkout')}
-                            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#8B5A2B] text-white text-base font-semibold hover:bg-[#734922]"
+                            disabled={pausado}
+                            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#8B5A2B] text-white text-base font-semibold hover:bg-[#734922] disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <ShoppingBag className="h-5 w-5" />
                             Proceder al Pedido
@@ -326,7 +343,7 @@ ${listaProductosTexto}
                       <button
                         form="checkout-form"
                         type="submit"
-                        disabled={procesando}
+                        disabled={procesando || pausado}
                         className={`w-full h-14 flex items-center justify-center gap-2 font-bold rounded-xl shadow-lg transition-all ${
                           procesando 
                             ? 'bg-espresso-800 text-espresso-400 cursor-not-allowed' 

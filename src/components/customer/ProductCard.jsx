@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Info, Plus, Check, Coffee } from 'lucide-react';
 
@@ -13,8 +13,8 @@ export default function ProductCard({ producto, onAgregar, onVerDetalle }) {
     e.stopPropagation();
     if (producto.disponible === false) return;
     
-    // NUEVO: Si el producto tiene variantes, abrimos el modal de detalle para que elija
-    if (producto.variantes && producto.variantes.length > 0) {
+    // Si el producto tiene variantes o extras disponibles, abrimos el modal de detalle para que elija
+    if ((producto.variantes && producto.variantes.length > 0) || (producto.extras && producto.extras.length > 0)) {
       onVerDetalle(producto);
     } else {
       // Si no tiene variantes (ej. un café normal), lo agrega directamente
