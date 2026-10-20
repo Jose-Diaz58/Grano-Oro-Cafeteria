@@ -7,30 +7,32 @@ import { useCartStore } from '../../../store/cartStore';
 import { createOrder } from '../../../api.js';
 
 export default function CartModal({ mostrar, onCerrar, info = INFO_TIENDA }) {
-  // Consumimos el estado global desde Zustand
   const { carrito, incrementarCantidad, decrementarCantidad, eliminarDelCarrito, limpiarCarrito } = useCartStore();
   
-  const [paso, setPaso] = useState('carrito'); // 'carrito' | 'checkout'
+  const [paso, setPaso] = useState('carrito');
   const [nombreCliente, setNombreCliente] = useState('');
-  const [tipoServicio, setTipoServicio] = useState('comer_aqui'); // 'comer_aqui' | 'para_llevar'
+  const [tipoServicio, setTipoServicio] = useState('comer_aqui');
   const [numeroMesa, setNumeroMesa] = useState('');
   const [pagoCon, setPagoCon] = useState('');
   const [notasAdicionales, setNotasAdicionales] = useState('');
-  
-  // Estado para el botón de carga mientras se guarda en la BD
   const [procesando, setProcesando] = useState(false);
 
   const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
   const totalPrecio = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
 
-  const pausado = Boolean(info.pausado);
+  // Leemos el estado evaluado por el componente Menu.jsx
+  const estadoTienda = info.estadoTienda || { abierto: true };
+  const tiendaBloqueada = !estadoTienda.abierto;
 
   const handleConfirmarPedido = async (e) => {
     e.preventDefault();
-    if (pausado) {
-      alert('Por el momento no estamos recibiendo pedidos. Intenta más tarde.');
-      return;
+    
+    // El doble check de seguridad final
+    if (tiendaBloqueada) {
+       alert(`Lo sentimos, no podemos procesar el pedido. ${estadoTienda.motivo}`);
+       return;
     }
+
     if (!nombreCliente.trim()) {
       alert("Por favor ingresa tu nombre.");
       return;
@@ -49,7 +51,6 @@ export default function CartModal({ mostrar, onCerrar, info = INFO_TIENDA }) {
     try {
       setProcesando(true);
       
-      // 1. Crear el objeto del pedido para MongoDB
       const orderData = {
         cliente: nombreCliente.trim(),
         tipoServicio: tipoServicio === 'comer_aqui' ? 'Comer Aquí' : 'Para Llevar',
@@ -57,9 +58,9 @@ export default function CartModal({ mostrar, onCerrar, info = INFO_TIENDA }) {
         notas: notasAdicionales.trim(),
         estado: 'Nuevo',
         productos: carrito.map(item => ({
-          productoId: item._id || item.id, // ID original del producto para MongoDB
+          productoId: item._id || item.id,
           nombre: item.nombre,
-          variante: item.variante || '', // Enviamos la variante a la base de datos
+          variante: item.variante || '', 
           extras: (item.extras || []).map((x) => ({ nombre: x.nombre, precio: x.precio })),
           cantidad: item.cantidad,
           precio: item.precio
@@ -67,12 +68,9 @@ export default function CartModal({ mostrar, onCerrar, info = INFO_TIENDA }) {
         total: totalPrecio
       };
 
-      // 2. Guardar en MongoDB y obtener respuesta del backend
       const pedidoGuardado = await createOrder(orderData);
-      
       const folioReal = pedidoGuardado.folio || pedidoGuardado._id?.substring(pedidoGuardado._id.length - 6).toUpperCase() || 'GOC-EN-SITIO';
 
-      // 3. Preparar mensaje para WhatsApp incluyendo la variante
       const listaProductosTexto = carrito
         .map((item) => {
           const base = item.variante ? `${item.nombre} (${item.variante})` : item.nombre;
@@ -103,7 +101,6 @@ ${listaProductosTexto}
       const telefonoWhatsApp = `52${info.whatsapp}`;
       const url = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeWhatsApp)}`;
       
-      // 4. Limpiar el carrito local, cerrar el modal y redirigir
       limpiarCarrito();
       handleCerrarModal();
       window.open(url, '_blank');
@@ -140,7 +137,6 @@ ${listaProductosTexto}
                   transition={{ type: 'spring', stiffness: 360, damping: 34 }}
                   className="pointer-events-auto relative flex h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl border border-b-0 border-espresso-500 bg-espresso-900 sm:h-[85vh] sm:max-w-lg sm:rounded-2xl sm:border-b"
                 >
-                  {/* Header */}
                   <header className="flex shrink-0 items-center justify-between border-b border-espresso-600 bg-espresso-900/90 px-4 py-4 backdrop-blur-xl">
                     <div className="flex items-center gap-2">
                       {paso === 'checkout' && (
@@ -165,13 +161,16 @@ ${listaProductosTexto}
                     </button>
                   </header>
 
-                  {/* Cuerpo */}
                   <div className="scrollbar-hide flex-1 overflow-y-auto px-4 py-5">
-                    {pausado && (
-                      <p className="mb-4 rounded-xl border border-red-300 bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
-                        Por el momento no estamos recibiendo pedidos nuevos. Intenta de nuevo más tarde.
-                      </p>
+                    
+                    {/* Banners de Advertencia en el Modal */}
+                    {tiendaBloqueada && (
+                      <div className="mb-4 rounded-xl border border-red-500/30 bg-red-900/20 px-4 py-3 text-center">
+                        <p className="text-sm font-bold text-red-400">Tienda Cerrada</p>
+                        <p className="text-xs text-red-300/80 mt-0.5">{estadoTienda.motivo}</p>
+                      </div>
                     )}
+
                     {paso === 'carrito' ? (
                       carrito.length === 0 ? (
                         <div className="flex h-full flex-col items-center justify-center text-center opacity-80">
@@ -187,7 +186,6 @@ ${listaProductosTexto}
                       ) : (
                         <div className="space-y-4 pb-8">
                           {carrito.map((item) => {
-                            // Utilizamos el cartItemId de Zustand para las operaciones
                             const id = item.cartItemId;
                             return (
                               <div key={id} className="relative overflow-hidden rounded-2xl bg-espresso-700 border border-espresso-500 p-4 flex items-center gap-3">
@@ -219,9 +217,7 @@ ${listaProductosTexto}
                         </div>
                       )
                     ) : (
-                      /* Formulario de Finalizar Pedido */
                       <form id="checkout-form" onSubmit={handleConfirmarPedido} className="space-y-4 text-parchment pb-8">
-                        {/* Nombre */}
                         <div>
                           <label className="block text-sm font-semibold mb-1 text-gold-400">Nombre del cliente *</label>
                           <input
@@ -234,7 +230,6 @@ ${listaProductosTexto}
                           />
                         </div>
 
-                        {/* Tipo de Servicio */}
                         <div>
                           <label className="block text-sm font-semibold mb-2 text-gold-400">¿Cómo deseas recibir tu pedido?</label>
                           <div className="grid grid-cols-2 gap-3">
@@ -265,7 +260,6 @@ ${listaProductosTexto}
                           </div>
                         </div>
 
-                        {/* Mesa */}
                         {tipoServicio === 'comer_aqui' && (
                           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
                             <label className="block text-sm font-semibold mb-1 text-gold-400">Número de mesa *</label>
@@ -280,7 +274,6 @@ ${listaProductosTexto}
                           </motion.div>
                         )}
 
-                        {/* Pago Obligatorio y Positivo */}
                         <div>
                           <label className="block text-sm font-semibold mb-1 text-gold-400">¿Con cuánto vas a pagar? *</label>
                           <input
@@ -299,7 +292,6 @@ ${listaProductosTexto}
                           />
                         </div>
 
-                        {/* Notas o Indicaciones Especiales */}
                         <div>
                           <label className="block text-sm font-semibold mb-1 text-gold-400">Instrucciones o notas adicionales</label>
                           <textarea
@@ -311,7 +303,6 @@ ${listaProductosTexto}
                           />
                         </div>
 
-                        {/* Resumen Total interno al form */}
                         <div className="p-4 bg-espresso-800 rounded-xl border border-espresso-600 flex justify-between items-center mt-2">
                           <span className="font-semibold text-parchment-muted">Total a Pagar:</span>
                           <span className="text-2xl font-bold text-gold-500">${totalPrecio.toFixed(2)} MXN</span>
@@ -320,7 +311,6 @@ ${listaProductosTexto}
                     )}
                   </div>
 
-                  {/* Footer inicial / Botones de acción */}
                   <div className="shrink-0 border-t border-espresso-600 bg-espresso-900/90 p-4">
                     {paso === 'carrito' ? (
                       carrito.length > 0 && (
@@ -331,8 +321,12 @@ ${listaProductosTexto}
                           </div>
                           <button 
                             onClick={() => setPaso('checkout')}
-                            disabled={pausado}
-                            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#8B5A2B] text-white text-base font-semibold hover:bg-[#734922] disabled:cursor-not-allowed disabled:opacity-40"
+                            disabled={tiendaBloqueada}
+                            className={`flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl text-base font-semibold transition-all ${
+                               tiendaBloqueada 
+                                ? 'bg-espresso-800 text-espresso-400 cursor-not-allowed' 
+                                : 'bg-[#8B5A2B] hover:bg-[#734922] text-white'
+                            }`}
                           >
                             <ShoppingBag className="h-5 w-5" />
                             Proceder al Pedido
@@ -343,9 +337,9 @@ ${listaProductosTexto}
                       <button
                         form="checkout-form"
                         type="submit"
-                        disabled={procesando || pausado}
+                        disabled={procesando || tiendaBloqueada}
                         className={`w-full h-14 flex items-center justify-center gap-2 font-bold rounded-xl shadow-lg transition-all ${
-                          procesando 
+                          procesando || tiendaBloqueada
                             ? 'bg-espresso-800 text-espresso-400 cursor-not-allowed' 
                             : 'bg-[#8B5A2B] hover:bg-[#734922] text-white'
                         }`}

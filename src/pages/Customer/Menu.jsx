@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProducts, getExtras, getConfig } from '../../api.js';
+import { getProducts, getExtras, getConfig, getCategories } from '../../api.js';
 import { INFO_TIENDA } from '../../data/mockData';
 import Navbar from '../../components/customer/Navbar';
 import CategoriasNav from '../../components/customer/CategoriasNav';
@@ -24,15 +24,65 @@ function SkeletonCard() {
   );
 }
 
-// "07:00" -> "7:00 AM"
 const formatearHora = (hhmm = '') => {
   const [h, m] = hhmm.split(':').map(Number);
   if (Number.isNaN(h)) return hhmm;
   return `${h % 12 || 12}:${String(m || 0).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 };
 
+// --- LÓGICA CENTRALIZADA DE HORARIOS ---
+const verificarDisponibilidad = (config) => {
+  if (!config) return { abierto: true }; 
+  
+  // 1. Pausa de emergencia
+  if (config.pausado) {
+    return { abierto: false, motivo: 'Por el momento no estamos recibiendo pedidos por alta demanda.' };
+  }
+
+  // 2. Reloj ajustado a México
+  const ahora = new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" });
+  const fechaActual = new Date(ahora);
+  const diaSemana = fechaActual.getDay(); // 0 = Domingo
+
+  // 3. Validación del Día
+  let abiertoHoy = false;
+  const diasConfig = (config.dias || '').toLowerCase();
+
+  if (diasConfig.includes('lunes a viernes')) {
+    abiertoHoy = diaSemana >= 1 && diaSemana <= 5;
+  } else if (diasConfig.includes('sábado') || diasConfig.includes('sabado')) {
+    abiertoHoy = diaSemana >= 1 && diaSemana <= 6;
+  } else if (diasConfig.includes('todos')) {
+    abiertoHoy = true;
+  }
+
+  if (!abiertoHoy) return { abierto: false, motivo: `Día de descanso. Abrimos de ${config.dias}.` };
+
+  // 4. Validación Matemática de la Hora
+  const horaActualNum = fechaActual.getHours() * 100 + fechaActual.getMinutes();
+  
+  const [horaApe, minApe] = (config.apertura || '07:00').split(':').map(Number);
+  const aperturaNum = horaApe * 100 + minApe;
+
+  const [horaCie, minCie] = (config.cierre || '17:00').split(':').map(Number);
+  const cierreNum = horaCie * 100 + minCie;
+
+  // Soporta horarios normales y de trasnochador (ej. cierra a las 2:00 AM)
+  const overnight = aperturaNum > cierreNum;
+  const dentroDeHorario = overnight 
+    ? (horaActualNum >= aperturaNum || horaActualNum <= cierreNum)
+    : (horaActualNum >= aperturaNum && horaActualNum <= cierreNum);
+
+  if (dentroDeHorario) {
+    return { abierto: true };
+  } else {
+    const horaCierreFormat = `${horaCie % 12 || 12}:${String(minCie).padStart(2, '0')} ${horaCie < 12 ? 'AM' : 'PM'}`;
+    return { abierto: false, motivo: `Fuera de horario (Cerramos a las ${horaCierreFormat}).` };
+  }
+};
+
 export default function Menu() {
-  const [config, setConfig] = useState(null); // configuración del admin (null = sin cargar)
+  const [config, setConfig] = useState(null); 
   const [productosBD, setProductosBD] = useState([]);
   const [categoriasBD, setCategoriasBD] = useState([]);
   const [categoriaActiva, setCategoriaActiva] = useState('Todas');
@@ -45,40 +95,45 @@ export default function Menu() {
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
-  // Zustand para estado global del carrito
   const { carrito, agregarAlCarrito } = useCartStore();
   const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+
+  // Analizamos si la tienda está abierta antes de renderizar
+  const estadoTienda = verificarDisponibilidad(config);
+  const tiendaCerrada = !estadoTienda.abierto;
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-
-        // 1. Promesa 1: Temporizador estricto de 1000ms (1 segundo)
         const tiempoMinimo = new Promise(resolve => setTimeout(resolve, 1700));
 
-        // 2. Promesa 2: Tu llamada real a la base de datos
-        // Extras y configuración del admin: si fallan, el menú sigue funcionando sin ellos
         const extrasPromesa = getExtras().catch(() => []);
         const configPromesa = getConfig().then(setConfig).catch(() => {});
+        const categoriasPromesa = getCategories().catch(() => []);
 
-        const peticionAPI = Promise.all([getProducts(), extrasPromesa]).then(([productosData, extrasData]) => {
-          // A cada producto le colgamos los extras globales que el admin le asignó
+        const peticionAPI = Promise.all([
+          getProducts(), 
+          extrasPromesa, 
+          categoriasPromesa
+        ]).then(([productosData, extrasData, categoriasData]) => {
+          
           setProductosBD(productosData.map((prod) => ({
             ...prod,
             extras: extrasData.filter((ex) => (ex.productos || []).includes(prod._id)),
           })));
-          const categoriasUnicas = ['Todas', ...new Set(productosData.map(p => p.categoria))];
-          setCategoriasBD(categoriasUnicas);
+
+          const nombresOrdenados = categoriasData
+            .filter(cat => cat.visible !== false)
+            .map(cat => cat.nombre);
+            
+          setCategoriasBD(['Todas', ...nombresOrdenados]);
         });
 
-        // 3. Ejecutar ambas al mismo tiempo y esperar a que la MÁS LENTA termine
         await Promise.all([tiempoMinimo, peticionAPI, configPromesa]);
-
       } catch (error) {
         console.error('Error al cargar datos:', error);
       } finally {
-        // Cuando pasan los 2 segundos Y los datos ya cargaron, quitamos la pantalla
         setShowSplash(false); 
         setLoading(false);
       }
@@ -87,7 +142,6 @@ export default function Menu() {
     cargarDatos();
   }, []);
 
-  // Datos de la tienda: lo que guardó el admin; si no hay servidor, los valores de respaldo
   const info = {
     ...INFO_TIENDA,
     ...(config && {
@@ -97,11 +151,14 @@ export default function Menu() {
       slogan: config.eslogan,
       whatsapp: config.whatsapp,
       dias: config.dias,
+      apertura: config.apertura,
+      cierre: config.cierre,
       horario: `${formatearHora(config.apertura)} - ${formatearHora(config.cierre)}`,
       empaqueEcologico: config.ecologico,
       minutosPrep: config.minutosPrep,
       pausado: config.pausado,
     }),
+    estadoTienda // Inyectamos el estado a los modales
   };
 
   const selectCat = (cat) => {
@@ -109,6 +166,15 @@ export default function Menu() {
     setLoading(true);
     setCategoriaActiva(cat);
     setTimeout(() => setLoading(false), 400);
+  };
+
+  // Interceptor: Bloquea añadir productos si está cerrado
+  const handleAgregarSeguro = (producto, variante, extras) => {
+    if (tiendaCerrada) {
+      alert(`Lo sentimos. ${estadoTienda.motivo}`);
+      return;
+    }
+    agregarAlCarrito(producto, variante, extras);
   };
 
   const productosFiltrados = productosBD.filter((prod) => {
@@ -138,6 +204,15 @@ export default function Menu() {
       />
       
       <main className="mx-auto max-w-6xl px-4 pt-6">
+        
+        {/* BANNER DE TIENDA CERRADA O FUERA DE HORARIO */}
+        {tiendaCerrada && (
+          <div className="mb-6 rounded-2xl bg-red-950/40 border border-red-500/50 p-4 text-center shadow-lg">
+            <h3 className="text-red-400 font-display text-lg font-bold">Cerrado temporalmente</h3>
+            <p className="text-red-300/80 text-sm mt-1">{estadoTienda.motivo}</p>
+          </div>
+        )}
+
         {busqueda && (
           <div className="mb-4 text-xs text-parchment-muted">
             Resultados para: <span className="font-bold text-parchment">"{busqueda}"</span> ({productosFiltrados.length})
@@ -159,7 +234,7 @@ export default function Menu() {
         ) : (
           <ProductGrid
             productos={productosFiltrados}
-            onAgregar={agregarAlCarrito}
+            onAgregar={handleAgregarSeguro}
             onVerDetalle={(producto) => setProductoSeleccionado(producto)}
           />
         )}
@@ -179,7 +254,7 @@ export default function Menu() {
       <ProductDetailModal
         producto={productoSeleccionado}
         onCerrar={() => setProductoSeleccionado(null)}
-        onAgregar={agregarAlCarrito}
+        onAgregar={handleAgregarSeguro}
       />
     </div>
   );

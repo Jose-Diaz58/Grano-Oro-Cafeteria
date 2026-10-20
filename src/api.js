@@ -32,3 +32,5 @@ export const getConfig = () => pedir('/configuracion/buscar')
 export const createOrder = (pedido) => pedir('/ventas/crear', { metodo: 'POST', cuerpo: pedido })
 export const getOrders = (limite) => pedir(limite ? `/ventas/buscar?limite=${limite}` : '/ventas/buscar')
 export const updateOrderStatus = (id, estado) => pedir(`/ventas/actualizar/${id}`, { metodo: 'PUT', cuerpo: { estado } })
+
+export const getCategories = () => pedir('/categorias/buscar')

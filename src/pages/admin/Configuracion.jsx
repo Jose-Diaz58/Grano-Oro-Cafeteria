@@ -42,7 +42,6 @@ export default function Configuracion() {
 
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
-  const [guardado, setGuardado] = useState(false)
 
   useEffect(() => {
     pedir('/configuracion/buscar')
@@ -56,15 +55,14 @@ export default function Configuracion() {
       })
       .catch((err) => {
         console.error('Error al cargar la configuración:', err)
+        toast.error('No se pudo cargar la configuración actual')
         setCargando(false)
       })
   }, [])
 
-  const set = (k, v) => {
-    setD((prev) => ({ ...prev, [k]: v }))
-    setGuardado(false)
-  }
+  const set = (k, v) => setD((prev) => ({ ...prev, [k]: v }))
 
+  // Cálculos reactivos
   const minimo = Math.max(10, (d.minutosPrep || 15) * 2 + 1)
   const telOk = (d.whatsapp || '').length === 10
 
@@ -73,23 +71,27 @@ export default function Configuracion() {
       setGuardando(true)
       const guardada = await pedir('/configuracion/actualizar', { metodo: 'PUT', cuerpo: d })
       actualizarConfig?.(guardada ?? d)
-      setGuardado(true)
-      toast.success('Configuración guardada en la base de datos')
+      toast.success('Configuración guardada exitosamente')
     } catch (err) {
       console.error(err)
-      toast.error('No se pudo guardar la configuración')
+      toast.error('Ocurrió un error al guardar los cambios')
     } finally {
       setGuardando(false)
     }
   }
 
   if (cargando) {
-    return <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-7 text-parchment-muted">Cargando configuración...</div>
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-7 text-parchment-muted">
+        Cargando configuración...
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] overflow-y-auto styled-scroll md:h-[calc(100vh-64px)]">
-      <div className="mx-auto max-w-6xl p-4 pb-28 sm:p-6 sm:pb-28 lg:p-7">
+    <div className="relative min-h-[calc(100vh-64px)] overflow-y-auto styled-scroll">
+      {/* El pb-32 asegura que la barra inferior flotante no tape los últimos campos */}
+      <div className="mx-auto max-w-6xl p-4 pb-32 sm:p-6 sm:pb-32 lg:p-7 lg:pb-32">
         <EncabezadoPagina
           eyebrow="Ajustes generales"
           titulo="Configuración de la empresa"
@@ -164,7 +166,7 @@ export default function Configuracion() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-parchment">Aviso de empaque ecológico</h3>
-                  <p className="mt-1 text-xs text-parchment-muted">Mostrar “Empaque ecológico incluido en todos los pedidos” en el frontend.</p>
+                  <p className="mt-1 text-xs text-parchment-muted">Mostrar “Empaque ecológico incluido en todos los pedidos”</p>
                 </div>
               </div>
               <Toggle on={Boolean(d.ecologico)} onChange={(v) => set('ecologico', v)} label="Aviso de empaque ecológico" />
@@ -225,10 +227,9 @@ export default function Configuracion() {
         </div>
       </div>
 
-      {/* Fixed Save Bar */}
-      <div className="fixed bottom-0 inset-x-0 z-20 border-t border-espresso-600 bg-espresso-900/90 p-4 backdrop-blur-xl md:left-60">
-        <div className="mx-auto flex max-w-6xl items-center justify-end gap-4">
-          {guardado && <p className="text-xs font-medium text-success animate-in fade-in duration-300">Configuración guardada</p>}
+      {/* Barra de guardar fijada abajo, respetando el menú lateral en pantallas grandes */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-espresso-600 bg-espresso-900/90 p-4 backdrop-blur-xl md:left-60 lg:left-64 xl:left-72">
+        <div className="mx-auto flex max-w-6xl items-center justify-end gap-4 px-2 sm:px-0">
           <button
             onClick={guardar}
             disabled={!telOk || guardando}
