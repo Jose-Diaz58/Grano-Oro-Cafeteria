@@ -6,6 +6,7 @@ import { formatearHoraLocal } from '../utils/tienda'
 export default function ClosedNotice({ config, nextOpening = 'Mañana a las 7:00 AM', onAdmin, brandLogoUrl }) {
   const dato = (campo) => config?.[campo] || CONFIG_INICIAL[campo]
   const nombreNegocio = dato('nombre')
+  const pausado = Boolean(config?.pausado)
 
   return (
     <motion.main
@@ -55,21 +56,25 @@ export default function ClosedNotice({ config, nextOpening = 'Mañana a las 7:00
           </div>
 
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-gold-500">
-            Fuera de horario
+            {pausado ? 'Pausa temporal' : 'Fuera de horario'}
           </p>
 
           <h1 className="font-display text-4xl font-semibold leading-tight text-parchment sm:text-5xl">
-            La tienda está cerrada
+            {pausado ? 'Pedidos pausados' : 'La tienda está cerrada'}
           </h1>
 
           <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-parchment-muted sm:text-base">
-            Estamos descansando para volver a servirte café recién hecho. En este momento no es posible realizar pedidos.
+            {pausado
+              ? 'Hemos pausado temporalmente la recepción de comandas por alta demanda. Por favor, intenta de nuevo en unos minutos.'
+              : 'Estamos descansando para volver a servirte café recién hecho. En este momento no es posible realizar pedidos.'}
           </p>
 
           <div className="mx-auto mt-7 grid max-w-md gap-3 rounded-2xl bg-espresso-900 p-4 text-left sm:grid-cols-2 sm:p-5">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-parchment-muted">
-                Próxima apertura
+                {pausado
+              ? 'Reanudación'
+              : 'Próxima apertura'}
               </p>
               <p className="mt-1 text-sm font-semibold capitalize text-parchment">
                 {nextOpening}
