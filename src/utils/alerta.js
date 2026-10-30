@@ -1,7 +1,6 @@
-// Sonido corto de "nuevo pedido" generado con Web Audio (no necesita archivos de audio).
-// Algunos navegadores lo bloquean hasta que la persona haya hecho clic en la página; por eso va en try/catch.
 let ctx
 
+// Aviso sonoro de "nuevo pedido" generado con Web Audio (no necesita archivos de audio)
 export function sonarAlerta() {
   try {
     const AC = window.AudioContext || window.webkitAudioContext
@@ -24,6 +23,6 @@ export function sonarAlerta() {
     tono(880, 0, 0.25)
     tono(1175, 0.25, 0.35)
   } catch {
-    // sin audio disponible: el aviso visual sigue funcionando
+    // Sin audio (o bloqueado por el navegador hasta el primer clic): el aviso visual sigue funcionando
   }
 }

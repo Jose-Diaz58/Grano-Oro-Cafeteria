@@ -1,45 +1,31 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
-
-// --- Vistas del Cliente ---
-import Menu from './pages/Customer/Menu.jsx';
-
-// --- Vistas del Administrador ---
-import Login from './pages/admin/Login.jsx';
-import Pedidos from './pages/admin/Pedidos.jsx';
-import Catalogo from './pages/admin/Catalogo.jsx';
-import Categorias from './pages/admin/Categorias.jsx';
-import Extras from './pages/admin/Extras.jsx';
-import Configuracion from './pages/admin/Configuracion.jsx';
-
-// --- Componentes del Administrador ---
-import RutaProtegida from './components/admin/RutaProtegida.jsx';
-import Layout from './components/admin/Layout.jsx';
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import Menu from './features/customer/pages/Menu'
+import Login from './features/admin/pages/Login'
+import Pedidos from './features/admin/pages/Pedidos'
+import Catalogo from './features/admin/pages/Catalogo'
+import Categorias from './features/admin/pages/Categorias'
+import Extras from './features/admin/pages/Extras'
+import Configuracion from './features/admin/pages/Configuracion'
+import RutaProtegida from './features/admin/components/RutaProtegida'
+import Layout from './features/admin/components/Layout'
 
 export default function App() {
   return (
     <>
-      <Toaster 
-        position="top-center" 
-        richColors 
-        closeButton 
-        toastOptions={{ classNames: { toast: 'font-body border-espresso-500 bg-espresso-700 text-parchment' } }} 
+      <Toaster
+        position="top-center"
+        richColors
+        closeButton
+        toastOptions={{ classNames: { toast: 'font-body border-espresso-500 bg-espresso-700 text-parchment' } }}
       />
 
       <Routes>
-        {/* =========================================
-            ZONA PÚBLICA (CLIENTE)
-        ========================================= */}
         <Route path="/" element={<Menu />} />
 
-        {/* =========================================
-            ZONA DE ADMINISTRACIÓN
-        ========================================= */}
         <Route path="/admin/login" element={<Login />} />
-
         <Route path="/admin" element={<RutaProtegida />}>
           <Route element={<Layout />}>
-            {/* Redirigir /admin automáticamente a /admin/pedidos */}
             <Route index element={<Navigate to="pedidos" replace />} />
             <Route path="pedidos" element={<Pedidos />} />
             <Route path="catalogo" element={<Catalogo />} />
@@ -49,11 +35,8 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* =========================================
-            RUTA POR DEFECTO (Si no existe la URL, vuelve al Menú)
-        ========================================= */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
-  );
+  )
 }

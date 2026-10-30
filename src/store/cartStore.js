@@ -1,76 +1,55 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+const cambiarCantidad = (carrito, cartItemId, delta) =>
+  carrito.map((item) => (item.cartItemId === cartItemId ? { ...item, cantidad: item.cantidad + delta } : item))
 
 export const useCartStore = create(
   persist(
     (set, get) => ({
       carrito: [],
-      
-      // Actualizado para recibir la variante seleccionada
-      agregarAlCarrito: (producto, varianteSeleccionada = null, extrasElegidos = []) => {
-        const { carrito } = get();
-        const idProd = producto._id || producto.id;
-        
-        // Creamos un ID único para el carrito: ID_PRODUCTO + VARIANTE (ej. 64a2b9-Rojos)
-        let cartItemId = varianteSeleccionada ? `${idProd}-${varianteSeleccionada}` : idProd;
-        // Mismo producto con distintos extras = renglón distinto en el carrito
-        const extras = extrasElegidos.map((e) => ({ id: e._id || e.id, nombre: e.nombre, precio: e.precio }));
-        if (extras.length) cartItemId += `+${extras.map((e) => e.id).sort().join(',')}`;
-        const precioBase = producto.precioBase ?? producto.precio;
-        const precioUnitario = precioBase + extras.reduce((s, e) => s + e.precio, 0);
-        
-        const existe = carrito.find((item) => item.cartItemId === cartItemId);
-        
-        if (existe) {
-          set({
-            carrito: carrito.map((item) =>
-              item.cartItemId === cartItemId ? { ...item, cantidad: item.cantidad + 1 } : item
-            ),
-          });
-        } else {
-          set({ 
-            carrito: [...carrito, { 
+
+      // Un mismo producto con distinta variante o extras es un renglón distinto del carrito
+      agregarAlCarrito: (producto, variante = null, extrasElegidos = []) => {
+        const extras = extrasElegidos.map((e) => ({ id: e._id, nombre: e.nombre, precio: e.precio }))
+        let cartItemId = variante ? `${producto._id}-${variante}` : producto._id
+        if (extras.length) cartItemId += `+${extras.map((e) => e.id).sort().join(',')}`
+
+        const { carrito } = get()
+        if (carrito.some((item) => item.cartItemId === cartItemId)) {
+          set({ carrito: cambiarCantidad(carrito, cartItemId, 1) })
+          return
+        }
+
+        const precioBase = producto.precioBase ?? producto.precio
+        set({
+          carrito: [
+            ...carrito,
+            {
               ...producto,
               precioBase,
-              precio: precioUnitario, // incluye los extras
+              precio: precioBase + extras.reduce((suma, e) => suma + e.precio, 0),
               extras,
-              cartItemId, // Usamos este nuevo ID para identificar la variante exacta en el carrito
-              variante: varianteSeleccionada,
-              cantidad: 1 
-            }] 
-          });
-        }
+              cartItemId,
+              variante,
+              cantidad: 1,
+            },
+          ],
+        })
       },
-      
-      // Funciones actualizadas para buscar por cartItemId
-      incrementarCantidad: (cartItemId) => {
-        set({
-          carrito: get().carrito.map((item) =>
-            item.cartItemId === cartItemId ? { ...item, cantidad: item.cantidad + 1 } : item
-          ),
-        });
-      },
-      
-      decrementarCantidad: (cartItemId) => {
-        set({
-          carrito: get().carrito
-            .map((item) =>
-              item.cartItemId === cartItemId ? { ...item, cantidad: item.cantidad - 1 } : item
-            )
-            .filter((item) => item.cantidad > 0),
-        });
-      },
-      
-      eliminarDelCarrito: (cartItemId) => {
-        set({
-          carrito: get().carrito.filter((item) => item.cartItemId !== cartItemId),
-        });
-      },
-      
+
+      incrementarCantidad: (cartItemId) => set({ carrito: cambiarCantidad(get().carrito, cartItemId, 1) }),
+
+      decrementarCantidad: (cartItemId) =>
+        set({ carrito: cambiarCantidad(get().carrito, cartItemId, -1).filter((item) => item.cantidad > 0) }),
+
+      eliminarDelCarrito: (cartItemId) => set({ carrito: get().carrito.filter((item) => item.cartItemId !== cartItemId) }),
+
       limpiarCarrito: () => set({ carrito: [] }),
     }),
-    {
-      name: 'grano-de-oro-cart',
-    }
-  )
-);
+    { name: 'grano-de-oro-cart' },
+  ),
+)
+
+export const selectTotalItems = (state) => state.carrito.reduce((suma, item) => suma + item.cantidad, 0)
+export const selectTotalPrecio = (state) => state.carrito.reduce((suma, item) => suma + item.precio * item.cantidad, 0)
