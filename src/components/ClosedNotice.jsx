@@ -60,12 +60,12 @@ export default function ClosedNotice({ config, nextOpening = 'Mañana a las 7:00
           </p>
 
           <h1 className="font-display text-4xl font-semibold leading-tight text-parchment sm:text-5xl">
-            {pausado ? 'Pedidos pausados' : 'La tienda está cerrada'}
+            {pausado ? 'Por falta de pago' : 'La tienda está cerrada'}
           </h1>
 
           <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-parchment-muted sm:text-base">
             {pausado
-              ? 'Hemos pausado temporalmente la recepción de comandas por alta demanda. Por favor, intenta de nuevo en unos minutos.'
+              ? 'Hemos pausado temporalmente la recepción de comandas por falta de pago. Por favor, esperamos el pago en la brevedad posible.'
               : 'Estamos descansando para volver a servirte café recién hecho. En este momento no es posible realizar pedidos.'}
           </p>
 
