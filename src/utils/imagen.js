@@ -1,6 +1,6 @@
 // Imágenes de productos: se redimensionan y comprimen en el navegador antes de guardarse,
 // para que la base de datos no se llene de fotos pesadas.
-export const ENTRADA_MAX_MB = 12        // tamaño máximo del archivo que se puede elegir
+export const ENTRADA_MAX_MB = 9.5        // tamaño máximo del archivo que se puede elegir
 export const SALIDA_MAX_KB = 150       // tamaño máximo que se guarda ya comprimida
 const LADO_MAX = 800                   // px del lado más largo
 const TIPOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
