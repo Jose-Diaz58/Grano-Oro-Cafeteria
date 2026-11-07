@@ -1,6 +1,7 @@
 import logoTienda from '../assets/xd.webp'
 
-export const SPLASH_MS = 1700
+export const SPLASH_MS = 1700       // login del admin
+export const SPLASH_MENU_MS = 700   // pantalla de bienvenida del menú público (mínimo)
 export const ESQUELETO_MIN_MS = 1500
 export const CATEGORIA_TODAS = 'Todas'
 

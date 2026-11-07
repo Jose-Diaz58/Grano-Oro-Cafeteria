@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { getProducts, getExtras, getConfig, getCategories, escucharCambios } from '../../../config/api'
-import { SPLASH_MS } from '../../../config/constants'
+import { SPLASH_MENU_MS } from '../../../config/constants'
 
 const REFRESCO_MS = 5000
 
@@ -25,7 +25,7 @@ const actualizarSiCambio = (setEstado, nuevo) =>
   setEstado((prev) => (JSON.stringify(prev) === JSON.stringify(nuevo) ? prev : nuevo))
 
 // Carga el menú público: productos, categorías y configuración de la tienda.
-// `cargando` se mantiene en true al menos SPLASH_MS para que se vea la pantalla de bienvenida.
+// `cargando` se mantiene en true al menos SPLASH_MENU_MS para que se vea la pantalla de bienvenida.
 // Después se mantiene al día solo: cada pocos segundos, al volver a la pestaña y al instante
 // cuando el panel de administración (en otra pestaña del mismo navegador) guarda un cambio.
 export function useMenuData() {
@@ -39,7 +39,7 @@ export function useMenuData() {
     let activo = true
 
     const cargar = async () => {
-      const esperaMinima = new Promise((resolve) => setTimeout(resolve, SPLASH_MS))
+      const esperaMinima = new Promise((resolve) => setTimeout(resolve, SPLASH_MENU_MS))
 
       const configPromesa = getConfig()
         .then((datos) => activo && setConfig(datos))

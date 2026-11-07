@@ -4,7 +4,7 @@ import { Trash2, Pencil, ImageOff, Plus, Package } from 'lucide-react'
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories } from '../../../config/api'
 import { CATEGORIAS_BASE } from '../../../config/constants'
 import { SkeletonRow } from '../../../components/ui/Skeletons'
-import { esUrlHttp, esDataUrl } from '../../../utils/imagen'
+import { esUrlHttp, esDataUrl, ENTRADA_MAX_MB } from '../../../utils/imagen'
 import AdminPageHeader from '../components/AdminPageHeader'
 import ConfirmarEliminar from '../components/ConfirmarEliminar'
 import ModalProducto from '../components/ModalProducto'
@@ -127,7 +127,7 @@ export default function Catalogo() {
     } catch (e) {
       // Si el mensaje incluye el error 500, mostramos tu texto personalizado
       if (e.message && e.message.includes('500')) {
-        toast.error('Imagen muy pesada. Tamaño maximo permitido: 12Mb')
+        toast.error('Imagen muy pesada. Tamaño máximo permitido: ' + ENTRADA_MAX_MB + ' MB')
       } else {
         toast.error(e.message || 'Error al intentar guardar el producto')
       }

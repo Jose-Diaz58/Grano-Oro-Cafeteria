@@ -5,6 +5,7 @@ import { X, Trash2, Minus, Plus, ShoppingCart, ShoppingBag, ArrowLeft, Utensils,
 import { createOrder } from '../../../config/api'
 import { useCartStore, selectTotalItems, selectTotalPrecio } from '../../../store/cartStore'
 import Modal from '../../../components/ui/Modal'
+import { optimizarImagen } from '../../../utils/imagen'
 
 const OPCIONES_SERVICIO = [
   { id: 'comer_aqui', etiqueta: 'Comer aquí', etiquetaApi: 'Comer Aquí', Icono: Utensils },
@@ -60,7 +61,7 @@ function CarritoVacio({ onExplorar }) {
 function ItemCarrito({ item, onIncrementar, onDecrementar, onEliminar }) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-espresso-700 border border-espresso-500 p-4 flex items-center gap-3">
-      <img src={item.imagen} alt={item.nombre} className="h-14 w-14 shrink-0 rounded-xl bg-espresso-600 object-cover" />
+      <img src={optimizarImagen(item.imagen, 120)} alt={item.nombre} loading="lazy" decoding="async" className="h-14 w-14 shrink-0 rounded-xl bg-espresso-600 object-cover" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium leading-snug text-parchment">
           {item.nombre} {item.variante && <span className="text-gold-400">({item.variante})</span>}

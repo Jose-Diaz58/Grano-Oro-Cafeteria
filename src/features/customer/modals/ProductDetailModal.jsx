@@ -3,6 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { motion } from 'motion/react'
 import { X } from 'lucide-react'
 import Modal from '../../../components/ui/Modal'
+import { optimizarImagen } from '../../../utils/imagen'
 
 function DetalleProducto({ producto, onCerrar, onAgregar }) {
   const variantes = producto.variantes ?? []
@@ -29,7 +30,7 @@ function DetalleProducto({ producto, onCerrar, onAgregar }) {
       </div>
 
       <div className="relative h-56 w-full shrink-0 bg-espresso-600">
-        <img src={producto.imagen} alt={producto.nombre} className="h-full w-full object-cover" />
+        <img src={optimizarImagen(producto.imagen, 800)} alt={producto.nombre} decoding="async" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
         <button

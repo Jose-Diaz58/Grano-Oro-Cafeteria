@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { SPLASH_MS } from '../../../config/constants'
+import { SPLASH_MENU_MS } from '../../../config/constants'
 import logo from '../../../assets/Logo-sin-fondo.webp'
 
 export default function SplashScreen({ mostrar }) {
@@ -22,7 +22,7 @@ export default function SplashScreen({ mostrar }) {
                 className="absolute bottom-0 left-0 h-full w-full object-contain drop-shadow-xl"
                 initial={{ clipPath: 'inset(100% 0% 0% 0%)' }}
                 animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
-                transition={{ duration: SPLASH_MS / 1000, ease: 'easeInOut' }}
+                transition={{ duration: SPLASH_MENU_MS / 1000, ease: 'easeInOut' }}
               />
             </div>
 
