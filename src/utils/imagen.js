@@ -1,6 +1,6 @@
 // Imágenes de productos: se redimensionan y comprimen en el navegador antes de guardarse,
 // para que la base de datos no se llene de fotos pesadas.
-export const ENTRADA_MAX_MB = 9.5        // tamaño máximo del archivo que se puede elegir
+export const ENTRADA_MAX_MB = 9.5      // tamaño máximo del archivo que se puede elegir
 export const SALIDA_MAX_KB = 150       // tamaño máximo que se guarda ya comprimida
 const LADO_MAX = 800                   // px del lado más largo
 const TIPOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -44,3 +44,11 @@ export async function comprimirImagen(file) {
 
 export const esDataUrl = (valor) => typeof valor === 'string' && valor.startsWith('data:image/')
 export const esUrlHttp = (valor) => /^https?:\/\/\S+$/i.test(valor || '')
+
+// Pide a Cloudinary una versión más ligera (ancho máximo + formato/calidad automáticos).
+// Si la URL no es de Cloudinary se devuelve igual.
+export const optimizarImagen = (url, ancho = 480) => {
+  if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url
+  if (/\/upload\/[^/]*(w_|f_auto|q_auto)/.test(url)) return url
+  return url.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${ancho}/`)
+}
