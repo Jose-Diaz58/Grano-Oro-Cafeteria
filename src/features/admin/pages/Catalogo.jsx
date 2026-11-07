@@ -4,7 +4,7 @@ import { Trash2, Pencil, ImageOff, Plus, Package } from 'lucide-react'
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories } from '../../../config/api'
 import { CATEGORIAS_BASE } from '../../../config/constants'
 import { SkeletonRow } from '../../../components/ui/Skeletons'
-import { esDataUrl, esUrlHttp } from '../../../utils/imagen'
+import { esUrlHttp } from '../../../utils/imagen'
 import AdminPageHeader from '../components/AdminPageHeader'
 import ConfirmarEliminar from '../components/ConfirmarEliminar'
 import ModalProducto from '../components/ModalProducto'
@@ -13,7 +13,7 @@ import { useCargaInicial } from '../hooks/useCargaInicial'
 const COLUMNAS = ['Producto', 'Categoría', 'Precio', 'Estado', '']
 
 const formVacio = (categoria = '') => ({
-  id: null, nombre: '', precio: '', categoria, porcion: '', descripcion: '', variantes: '', imagen: '',
+  id: null, nombre: '', precio: '', categoria, porcion: '', descripcion: '', variantes: '', imagen: '', imagenFile: null,
 })
 
 const formDeProducto = (p) => ({
@@ -25,6 +25,7 @@ const formDeProducto = (p) => ({
   descripcion: p.descripcion || '',
   variantes: (p.variantes || []).join(', '),
   imagen: p.imagen || '',
+  imagenFile: null,
 })
 
 function Miniatura({ src, nombre }) {
@@ -95,36 +96,41 @@ export default function Catalogo() {
       toast.error('Escribe un nombre y un precio válido')
       return
     }
-    const imagen = form.imagen.trim()
-    if (imagen && !esDataUrl(imagen) && !esUrlHttp(imagen)) {
-      toast.error('El enlace de la imagen debe empezar con http:// o https://')
-      return
-    }
 
-    const datos = {
-      nombre: form.nombre.trim(),
-      precio,
-      categoria: form.categoria,
-      porcion: form.porcion.trim(),
-      descripcion: form.descripcion.trim(),
-      variantes: form.variantes.split(',').map((v) => v.trim()).filter(Boolean),
-      imagen,
+    // Armamos un FormData para soportar la subida del archivo físico o texto
+    const formData = new FormData()
+    formData.append('nombre', form.nombre.trim())
+    formData.append('precio', precio)
+    formData.append('categoria', form.categoria)
+    formData.append('porcion', form.porcion.trim())
+    formData.append('descripcion', form.descripcion.trim())
+    formData.append('variantes', JSON.stringify(form.variantes.split(',').map((v) => v.trim()).filter(Boolean)))
+
+    // Si hay un archivo local seleccionado, lo adjuntamos
+    if (form.imagenFile) {
+      formData.append('imagen', form.imagenFile)
+    } else if (form.imagen && esUrlHttp(form.imagen)) {
+      // Si pegaron una URL directa
+      formData.append('imagen', form.imagen)
     }
 
     setGuardando(true)
     try {
       if (form.id) {
-        const actualizado = await actualizarEnAPI(form.id, datos)
-        if (!actualizado) return
-        toast.success(`${actualizado.nombre} actualizado`)
+        // Nota: Asegúrate de que tu función updateProduct en config/api.js acepte FormData
+        const actualizado = await updateProduct(form.id, formData)
+        const prodMod = actualizado.modificar || actualizado
+        setProductos((prev) => prev.map((p) => (p._id === form.id ? prodMod : p)))
+        toast.success(`${prodMod.nombre} actualizado`)
       } else {
-        const creado = await createProduct({ ...datos, disponible: true })
+        formData.append('disponible', 'true')
+        const creado = await createProduct(formData)
         setProductos((prev) => [...prev, creado])
         toast.success('Producto guardado')
       }
       setForm(null)
     } catch (e) {
-      toast.error(e.message)
+      toast.error(e.message || 'Error al guardar el producto')
     } finally {
       setGuardando(false)
     }

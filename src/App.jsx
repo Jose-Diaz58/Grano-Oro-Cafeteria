@@ -9,7 +9,6 @@ import Extras from './features/admin/pages/Extras'
 import Configuracion from './features/admin/pages/Configuracion'
 import RutaProtegida from './features/admin/components/RutaProtegida'
 import Layout from './features/admin/components/Layout'
-import PausaGlobal from './components/PausaGlobal'
 
 export default function App() {
   return (
@@ -21,25 +20,23 @@ export default function App() {
         toastOptions={{ classNames: { toast: 'font-body border-espresso-500 bg-espresso-700 text-parchment' } }}
       />
 
-      <PausaGlobal>
-        <Routes>
-          <Route path="/" element={<Menu />} />
+      <Routes>
+        <Route path="/" element={<Menu />} />
 
-          <Route path="/admin/login" element={<Login />} />
-          <Route path="/admin" element={<RutaProtegida />}>
-            <Route element={<Layout />}>
-              <Route index element={<Navigate to="pedidos" replace />} />
-              <Route path="pedidos" element={<Pedidos />} />
-              <Route path="catalogo" element={<Catalogo />} />
-              <Route path="categorias" element={<Categorias />} />
-              <Route path="extras" element={<Extras />} />
-              <Route path="configuracion" element={<Configuracion />} />
-            </Route>
+        <Route path="/admin/login" element={<Login />} />
+        <Route path="/admin" element={<RutaProtegida />}>
+          <Route element={<Layout />}>
+            <Route index element={<Navigate to="pedidos" replace />} />
+            <Route path="pedidos" element={<Pedidos />} />
+            <Route path="catalogo" element={<Catalogo />} />
+            <Route path="categorias" element={<Categorias />} />
+            <Route path="extras" element={<Extras />} />
+            <Route path="configuracion" element={<Configuracion />} />
           </Route>
+        </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </PausaGlobal>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </>
   )
 }

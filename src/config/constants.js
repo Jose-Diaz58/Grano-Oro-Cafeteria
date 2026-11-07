@@ -1,4 +1,4 @@
-import logoTienda from '../assets/xd.png'
+import logoTienda from '../assets/xd.webp'
 
 export const SPLASH_MS = 1700
 export const ESQUELETO_MIN_MS = 1500

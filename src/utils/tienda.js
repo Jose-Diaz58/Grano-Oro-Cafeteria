@@ -38,7 +38,7 @@ export function verificarDisponibilidad(config) {
     return {
       abierto: false,
       motivo: 'Por el momento no estamos recibiendo pedidos por alta demanda.',
-      proximaApertura: 'Hasta que lobato nos pague 🗣️',
+      proximaApertura: 'En unos Minutos....',
     }
   }
 

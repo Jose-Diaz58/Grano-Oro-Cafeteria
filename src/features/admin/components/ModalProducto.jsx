@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { Upload, Link as LinkIcon, X, ImageOff } from 'lucide-react'
-import { comprimirImagen, esDataUrl, ENTRADA_MAX_MB, SALIDA_MAX_KB } from '../../../utils/imagen'
+import { esUrlHttp } from '../../../utils/imagen'
 
 const campo = 'w-full bg-espresso-600 border border-espresso-500 rounded-xl px-4 py-2.5 text-sm text-parchment placeholder:text-parchment-muted focus:outline-none focus:border-gold-500 transition-colors'
 
@@ -11,24 +11,19 @@ const claseModo = (activo) =>
   }`
 
 export default function ModalProducto({ form, set, categorias, guardando, onGuardar, onCerrar }) {
-  const [modoImg, setModoImg] = useState(() => (esDataUrl(form.imagen) ? 'archivo' : 'url'))
-  const [procesandoImg, setProcesandoImg] = useState(false)
+  // Determinamos si inicia en modo URL o archivo según si la imagen actual es un enlace http
+  const [modoImg, setModoImg] = useState(() => (esUrlHttp(form.imagen) ? 'url' : 'archivo'))
   const inputArchivo = useRef(null)
   const editando = Boolean(form.id)
 
-  const elegirArchivo = async (e) => {
+  const elegirArchivo = (e) => {
     const archivo = e.target.files?.[0]
     e.target.value = ''
     if (!archivo) return
 
-    setProcesandoImg(true)
-    try {
-      set('imagen', await comprimirImagen(archivo))
-    } catch (err) {
-      toast.error(err.message)
-    } finally {
-      setProcesandoImg(false)
-    }
+    // Guardamos el archivo físico real en el estado y creamos una URL temporal solo para la vista previa
+    set('imagenFile', archivo)
+    set('imagen', URL.createObjectURL(archivo))
   }
 
   return (
@@ -88,7 +83,7 @@ export default function ModalProducto({ form, set, categorias, guardando, onGuar
                     />
                     <button
                       type="button"
-                      onClick={() => set('imagen', '')}
+                      onClick={() => { set('imagen', ''); set('imagenFile', null); }}
                       aria-label="Quitar imagen"
                       className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-500/80 transition-colors"
                     >
@@ -105,11 +100,11 @@ export default function ModalProducto({ form, set, categorias, guardando, onGuar
                     <input
                       key="imagen-url"
                       placeholder="https://..."
-                      value={esDataUrl(form.imagen) ? '' : form.imagen}
-                      onChange={(e) => set('imagen', e.target.value)}
+                      value={esUrlHttp(form.imagen) ? form.imagen : ''}
+                      onChange={(e) => { set('imagen', e.target.value); set('imagenFile', null); }}
                       className={campo}
                     />
-                    <p className="mt-2 text-[11px] text-parchment-muted leading-relaxed">Pega el enlace directo a la imagen (debe terminar en .jpg, .png, etc).</p>
+                    <p className="mt-2 text-[11px] text-parchment-muted leading-relaxed">Pega el enlace directo a la imagen.</p>
                   </>
                 ) : (
                   <>
@@ -117,13 +112,12 @@ export default function ModalProducto({ form, set, categorias, guardando, onGuar
                     <button
                       type="button"
                       onClick={() => inputArchivo.current?.click()}
-                      disabled={procesandoImg}
-                      className="h-11 w-full rounded-xl border border-dashed border-espresso-400 bg-espresso-700/30 text-sm font-medium text-parchment-dim hover:border-gold-500 hover:text-gold-500 transition-colors disabled:opacity-60"
+                      className="h-11 w-full rounded-xl border border-dashed border-espresso-400 bg-espresso-700/30 text-sm font-medium text-parchment-dim hover:border-gold-500 hover:text-gold-500 transition-colors"
                     >
-                      {procesandoImg ? 'Procesando imagen...' : esDataUrl(form.imagen) ? 'Cambiar archivo' : 'Elegir archivo local'}
+                      {form.imagenFile ? 'Cambiar archivo seleccionado' : 'Elegir archivo local'}
                     </button>
                     <p className="mt-2 text-[11px] text-parchment-muted leading-relaxed">
-                      JPG, PNG, WebP o GIF (máx. {ENTRADA_MAX_MB}MB). Se optimiza automáticamente a {SALIDA_MAX_KB}KB.
+                      Se subirá y optimizará automáticamente en la nube.
                     </p>
                   </>
                 )}
@@ -137,7 +131,7 @@ export default function ModalProducto({ form, set, categorias, guardando, onGuar
           </button>
           <button
             onClick={onGuardar}
-            disabled={guardando || procesandoImg}
+            disabled={guardando}
             className="flex-1 h-12 rounded-xl bg-gold-500 text-espresso-950 font-bold text-sm hover:bg-gold-400 transition-colors disabled:opacity-60"
           >
             {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Añadir producto'}

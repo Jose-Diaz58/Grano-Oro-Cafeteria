@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { SPLASH_MS } from '../../../config/constants'
-import logo from '../../../assets/Logo-sin-fondo.png'
+import logo from '../../../assets/Logo-sin-fondo.webp'
 
 export default function SplashScreen({ mostrar }) {
   return (

@@ -14,10 +14,15 @@ export function escucharCambios(alCambiar) {
 async function pedir(ruta, { metodo = 'GET', cuerpo } = {}) {
   let res
   try {
+    // Detectamos si el cuerpo es un FormData (para archivos e imágenes)
+    const esFormData = cuerpo instanceof FormData
+
     res = await fetch(`${API_URL}${ruta}`, {
       method: metodo,
-      headers: { 'Content-Type': 'application/json' },
-      body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+      // Si es FormData, NO mandamos Content-Type para que el navegador ponga el boundary multipart solo
+      headers: esFormData ? undefined : { 'Content-Type': 'application/json' },
+      // Si es FormData, pasamos el objeto directo; si no, lo convertimos a JSON
+      body: esFormData ? cuerpo : (cuerpo ? JSON.stringify(cuerpo) : undefined),
     })
   } catch {
     throw new Error('No se pudo conectar con el servidor')

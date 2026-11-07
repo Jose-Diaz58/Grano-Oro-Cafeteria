@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { LockKeyhole, User } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { SPLASH_MS } from '../../../config/constants'
-import logo from '../../../assets/Logo-sin-fondo.png'
+import logo from '../../../assets/Logo-sin-fondo.webp'
 import SplashScreen from '../../customer/components/SplashScreen'
 
 const campo = 'w-full bg-espresso-800 border border-espresso-600 rounded-xl py-3 pl-10 pr-4 text-sm text-parchment placeholder-parchment-muted focus:outline-none focus:border-gold-500 transition-colors'
