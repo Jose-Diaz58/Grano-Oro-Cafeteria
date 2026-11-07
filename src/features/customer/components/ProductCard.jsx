@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Info, Plus, Check, Coffee } from 'lucide-react'
-import { optimizarImagen } from '../../../utils/imagen'
+import { optimizarImagen, srcSetImagen } from '../../../utils/imagen'
 
 export default function ProductCard({ producto, onAgregar, onVerDetalle, prioridad = false }) {
   const [justAdded, setJustAdded] = useState(false)
@@ -45,7 +45,9 @@ export default function ProductCard({ producto, onAgregar, onVerDetalle, priorid
           </div>
         ) : (
           <img
-            src={optimizarImagen(producto.imagen, 480)}
+            src={optimizarImagen(producto.imagen, 480, 'auto:eco')}
+            srcSet={srcSetImagen(producto.imagen)}
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
             alt={producto.nombre}
             width={480}
             height={352}

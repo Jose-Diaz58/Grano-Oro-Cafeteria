@@ -45,10 +45,18 @@ export async function comprimirImagen(file) {
 export const esDataUrl = (valor) => typeof valor === 'string' && valor.startsWith('data:image/')
 export const esUrlHttp = (valor) => /^https?:\/\/\S+$/i.test(valor || '')
 
+const esCloudinary = (url) => !!url && url.includes('res.cloudinary.com') && url.includes('/upload/')
+const yaTransformada = (url) => /\/upload\/[^/]*(w_|f_auto|q_auto)/.test(url)
+
 // Pide a Cloudinary una versión más ligera (ancho máximo + formato/calidad automáticos).
 // Si la URL no es de Cloudinary se devuelve igual.
-export const optimizarImagen = (url, ancho = 480) => {
-  if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url
-  if (/\/upload\/[^/]*(w_|f_auto|q_auto)/.test(url)) return url
-  return url.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${ancho}/`)
+export const optimizarImagen = (url, ancho = 480, calidad = 'auto') => {
+  if (!esCloudinary(url) || yaTransformada(url)) return url
+  return url.replace('/upload/', `/upload/f_auto,q_${calidad},c_limit,w_${ancho}/`)
+}
+
+// srcset para que cada pantalla descargue solo el ancho que necesita (undefined si no es Cloudinary).
+export const srcSetImagen = (url, anchos = [320, 480, 640], calidad = 'auto:eco') => {
+  if (!esCloudinary(url) || yaTransformada(url)) return undefined
+  return anchos.map((w) => `${optimizarImagen(url, w, calidad)} ${w}w`).join(', ')
 }
