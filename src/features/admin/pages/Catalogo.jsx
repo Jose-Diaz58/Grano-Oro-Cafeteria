@@ -4,7 +4,7 @@ import { Trash2, Pencil, ImageOff, Plus, Package } from 'lucide-react'
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories } from '../../../config/api'
 import { CATEGORIAS_BASE } from '../../../config/constants'
 import { SkeletonRow } from '../../../components/ui/Skeletons'
-import { esUrlHttp } from '../../../utils/imagen'
+import { esUrlHttp, esDataUrl } from '../../../utils/imagen'
 import AdminPageHeader from '../components/AdminPageHeader'
 import ConfirmarEliminar from '../components/ConfirmarEliminar'
 import ModalProducto from '../components/ModalProducto'
@@ -43,10 +43,8 @@ function Miniatura({ src, nombre }) {
 export default function Catalogo() {
   const [productos, setProductos] = useState([])
   const [categorias, setCategorias] = useState([])
-
   const [editId, setEditId] = useState(null)
   const [editVal, setEditVal] = useState('')
-
   const [form, setForm] = useState(null)
   const [guardando, setGuardando] = useState(false)
   const [porEliminar, setPorEliminar] = useState(null)
@@ -67,7 +65,7 @@ export default function Catalogo() {
       setProductos((prev) => prev.map((p) => (p._id === id ? modificar : p)))
       return modificar
     } catch (e) {
-      toast.error(e.message)
+      toast.error(e.message || 'No se pudieron guardar los cambios')
       return null
     }
   }
@@ -76,12 +74,12 @@ export default function Catalogo() {
     const n = parseInt(editVal)
     setEditId(null)
     if (!(n > 0) || n === p.precio) return
-    if (await actualizarEnAPI(p._id, { precio: n })) toast.success(`Precio de ${p.nombre} actualizado`)
+    if (await actualizarEnAPI(p._id, { precio: n })) toast.success(`Precio de ${p.nombre} actualizado a $${n}`)
   }
 
   const cambiarDisponible = async (p) => {
     const actualizado = await actualizarEnAPI(p._id, { disponible: !p.disponible })
-    if (actualizado) toast.success(`${p.nombre}: ${actualizado.disponible ? 'disponible' : 'agotado'}`)
+    if (actualizado) toast.success(`El producto "${p.nombre}" ahora está ${actualizado.disponible ? 'disponible' : 'agotado'}`)
   }
 
   const cerrarForm = () => {
@@ -93,11 +91,10 @@ export default function Catalogo() {
   const guardar = async () => {
     const precio = parseInt(form.precio)
     if (!form.nombre.trim() || !(precio > 0)) {
-      toast.error('Escribe un nombre y un precio válido')
+      toast.error('Por favor, escribe un nombre y un precio válido')
       return
     }
 
-    // Armamos un FormData para soportar la subida del archivo físico o texto
     const formData = new FormData()
     formData.append('nombre', form.nombre.trim())
     formData.append('precio', precio)
@@ -105,32 +102,35 @@ export default function Catalogo() {
     formData.append('porcion', form.porcion.trim())
     formData.append('descripcion', form.descripcion.trim())
     formData.append('variantes', JSON.stringify(form.variantes.split(',').map((v) => v.trim()).filter(Boolean)))
-
-    // Si hay un archivo local seleccionado, lo adjuntamos
+    
+    // Aquí está el cambio clave: aceptar Data URL (Base64 comprimido)
     if (form.imagenFile) {
       formData.append('imagen', form.imagenFile)
-    } else if (form.imagen && esUrlHttp(form.imagen)) {
-      // Si pegaron una URL directa
+    } else if (form.imagen && (esUrlHttp(form.imagen) || esDataUrl(form.imagen))) {
       formData.append('imagen', form.imagen)
     }
 
     setGuardando(true)
     try {
       if (form.id) {
-        // Nota: Asegúrate de que tu función updateProduct en config/api.js acepte FormData
         const actualizado = await updateProduct(form.id, formData)
         const prodMod = actualizado.modificar || actualizado
         setProductos((prev) => prev.map((p) => (p._id === form.id ? prodMod : p)))
-        toast.success(`${prodMod.nombre} actualizado`)
+        toast.success(`¡El producto "${prodMod.nombre}" se actualizó correctamente!`)
       } else {
         formData.append('disponible', 'true')
         const creado = await createProduct(formData)
         setProductos((prev) => [...prev, creado])
-        toast.success('Producto guardado')
+        toast.success('¡Producto nuevo guardado en el catálogo!')
       }
       setForm(null)
     } catch (e) {
-      toast.error(e.message || 'Error al guardar el producto')
+      // Si el mensaje incluye el error 500, mostramos tu texto personalizado
+      if (e.message && e.message.includes('500')) {
+        toast.error('Imagen muy pesada. Tamaño maximo permitido: 12Mb')
+      } else {
+        toast.error(e.message || 'Error al intentar guardar el producto')
+      }
     } finally {
       setGuardando(false)
     }
@@ -140,9 +140,9 @@ export default function Catalogo() {
     try {
       await deleteProduct(porEliminar._id)
       setProductos((prev) => prev.filter((p) => p._id !== porEliminar._id))
-      toast.success(`${porEliminar.nombre} eliminado`)
+      toast.success(`El producto "${porEliminar.nombre}" ha sido eliminado del menú`)
     } catch (e) {
-      toast.error(e.message)
+      toast.error(e.message || 'No se pudo eliminar el producto')
     }
     setPorEliminar(null)
   }
@@ -288,7 +288,7 @@ export default function Catalogo() {
       {porEliminar && (
         <ConfirmarEliminar
           titulo="Eliminar producto"
-          mensaje={`¿Seguro que quieres eliminar "${porEliminar.nombre}"?`}
+          mensaje={`¿Seguro que quieres eliminar "${porEliminar.nombre}" del menú?`}
           onConfirmar={eliminar}
           onCancelar={() => setPorEliminar(null)}
         />
