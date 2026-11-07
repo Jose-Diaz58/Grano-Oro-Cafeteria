@@ -20,7 +20,8 @@ async function pedir(ruta, { metodo = 'GET', cuerpo } = {}) {
     res = await fetch(`${API_URL}${ruta}`, {
       method: metodo,
       // Si es FormData, NO mandamos Content-Type para que el navegador ponga el boundary multipart solo
-      headers: esFormData ? undefined : { 'Content-Type': 'application/json' },
+      // Los GET sin cuerpo tampoco llevan Content-Type: así no generan una petición previa (preflight CORS)
+      headers: esFormData || !cuerpo ? undefined : { 'Content-Type': 'application/json' },
       // Si es FormData, pasamos el objeto directo; si no, lo convertimos a JSON
       body: esFormData ? cuerpo : (cuerpo ? JSON.stringify(cuerpo) : undefined),
     })
@@ -33,7 +34,15 @@ async function pedir(ruta, { metodo = 'GET', cuerpo } = {}) {
   return datos
 }
 
-export const getProducts = () => pedir('/productos/buscar')
+// La primera vez usa la petición que index.html ya lanzó; si falló o ya se usó, pide normal
+export const getProducts = () => {
+  const previa = window.__precarga?.productos
+  if (previa) {
+    window.__precarga.productos = null
+    return previa.then((datos) => (Array.isArray(datos) ? datos : pedir('/productos/buscar')))
+  }
+  return pedir('/productos/buscar')
+}
 export const createProduct = (producto) => pedir('/productos/crear', { metodo: 'POST', cuerpo: producto })
 export const updateProduct = (id, cambios) => pedir(`/productos/actualizar/${id}`, { metodo: 'PUT', cuerpo: cambios })
 export const deleteProduct = (id) => pedir(`/productos/eliminar/${id}`, { metodo: 'DELETE' })

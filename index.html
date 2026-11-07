@@ -7,6 +7,22 @@
     <title>Grano de Oro</title>
 
 
+    <!-- Conexión anticipada a Cloudinary (imágenes de productos) -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+
+    <!-- Pide los productos a la API desde el HTML, sin esperar a que cargue el JS (api.js lo recoge) -->
+    <script>
+      (function () {
+        var u = '%VITE_API_URL%';
+        if (!u || u.indexOf('%') > -1) return;
+        window.__precarga = {
+          productos: fetch(u + '/productos/buscar')
+            .then(function (r) { return r.ok ? r.json() : null })
+            .catch(function () { return null }),
+        };
+      })();
+    </script>
+
     <!-- Carga optimizada y no bloqueante de Google Fonts (Playfair Display y Outfit) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
