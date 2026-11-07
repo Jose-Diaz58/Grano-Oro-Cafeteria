@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getProducts, getExtras, getConfig, getCategories, escucharCambios } from '../../../config/api'
 import { SPLASH_MENU_MS } from '../../../config/constants'
 
-const REFRESCO_MS = 5000
+const REFRESCO_MS = 15000
 
 // Productos (con sus extras) y nombres de las categorías visibles
 const cargarMenu = async ({ tolerante }) => {
