@@ -4,21 +4,41 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/webp" href="/src/assets/Logo.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Grano de Oro</title>
+    <title>Grano de Oro Café | Menú y pedidos en línea</title>
+    <meta name="description" content="Consulta el menú de Grano de Oro Café en el Tec: cafés calientes y fríos, jugos, licuados y desayunos. Arma tu pedido en línea y recógelo sin filas." />
+    <meta name="theme-color" content="#f4eee5" />
+
+    <!-- Vista previa al compartir el enlace (WhatsApp, Facebook, etc.) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_MX" />
+    <meta property="og:title" content="Grano de Oro Café | Menú y pedidos en línea" />
+    <meta property="og:description" content="Cafés, jugos, licuados y desayunos. Arma tu pedido en línea y recógelo sin filas." />
+    <meta property="og:url" content="https://grano-oro.vercel.app/" />
+    <link rel="canonical" href="https://grano-oro.vercel.app/" />
 
 
     <!-- Conexión anticipada a Cloudinary (imágenes de productos) -->
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 
-    <!-- Pide los productos a la API desde el HTML, sin esperar a que cargue el JS (api.js lo recoge) -->
+    <!-- Conexión anticipada a la API (evita DNS + TCP + TLS cuando se lance la primera petición) -->
+    <link rel="preconnect" href="%VITE_API_URL%" crossorigin>
+
+    <!-- Lanza TODAS las peticiones del menú desde el HTML, en paralelo con la descarga del JS
+         (api.js las recoge). Así se rompe la cadena HTML -> JS -> API. -->
     <script>
       (function () {
         var u = '%VITE_API_URL%';
         if (!u || u.indexOf('%') > -1) return;
-        window.__precarga = {
-          productos: fetch(u + '/productos/buscar')
+        function pedir(ruta) {
+          return fetch(u + ruta)
             .then(function (r) { return r.ok ? r.json() : null })
-            .catch(function () { return null }),
+            .catch(function () { return null });
+        }
+        window.__precarga = {
+          '/productos/buscar': pedir('/productos/buscar'),
+          '/categorias/buscar': pedir('/categorias/buscar'),
+          '/extras/buscar': pedir('/extras/buscar'),
+          '/configuracion/buscar': pedir('/configuracion/buscar'),
         };
       })();
     </script>
