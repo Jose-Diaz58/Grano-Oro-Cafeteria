@@ -66,5 +66,10 @@ export const getConfig = async () => {
 export const updateConfig = (config) => pedir('/configuracion/actualizar', { metodo: 'PUT', cuerpo: config })
 
 export const createOrder = (pedido) => pedir('/ventas/crear', { metodo: 'POST', cuerpo: pedido })
-export const getOrders = (limite) => pedir(limite ? `/ventas/buscar?limite=${limite}` : '/ventas/buscar')
+// El API responde { ventas, paginacion }; aquí se devuelve solo la lista de pedidos.
+// El API limita a 100 por petición; sin límite explícito se piden los 100 más recientes (el API usaría 20).
+export const getOrders = async (limite = 100) => {
+  const datos = await pedir(`/ventas/buscar?limite=${Math.min(limite, 100)}`)
+  return Array.isArray(datos) ? datos : (datos?.ventas ?? [])
+}
 export const updateOrderStatus = (id, estado) => pedir(`/ventas/actualizar/${id}`, { metodo: 'PUT', cuerpo: { estado } })
