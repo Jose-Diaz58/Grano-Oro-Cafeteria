@@ -6,6 +6,8 @@ import { createOrder } from '../../../config/api'
 import { useCartStore, selectTotalItems, selectTotalPrecio } from '../../../store/cartStore'
 import Modal from '../../../components/ui/Modal'
 import { optimizarImagen } from '../../../utils/imagen'
+import { formatearFolio, guardarUltimoFolio } from '../../../utils/folio'
+import EstadoPedido from '../components/EstadoPedido'
 
 const OPCIONES_SERVICIO = [
   { id: 'comer_aqui', etiqueta: 'Comer aquí', etiquetaApi: 'Comer Aquí', Icono: Utensils },
@@ -103,6 +105,7 @@ export default function CartModal({ mostrar, onCerrar, info }) {
   const [pagoCon, setPagoCon] = useState('')
   const [notasAdicionales, setNotasAdicionales] = useState('')
   const [procesando, setProcesando] = useState(false)
+  const [folioCreado, setFolioCreado] = useState(null)
 
   const comerAqui = tipoServicio === 'comer_aqui'
   const estadoTienda = info.estadoTienda || { abierto: true }
@@ -110,6 +113,7 @@ export default function CartModal({ mostrar, onCerrar, info }) {
 
   const handleCerrarModal = () => {
     setPaso('carrito')
+    setFolioCreado(null)
     onCerrar()
   }
 
@@ -158,7 +162,9 @@ export default function CartModal({ mostrar, onCerrar, info }) {
       const mensaje = armarMensajeWhatsApp({
         info,
         cliente: nombreCliente.trim(),
-        folio: pedidoGuardado.folio || pedidoGuardado._id?.substring(pedidoGuardado._id.length - 6).toUpperCase() || 'GOC-EN-SITIO',
+        folio: pedidoGuardado.folio
+          ? formatearFolio(pedidoGuardado.folio)
+          : pedidoGuardado._id?.substring(pedidoGuardado._id.length - 6).toUpperCase() || 'GOC-EN-SITIO',
         carrito,
         total: totalPrecio,
         pagoCon: montoPago,
@@ -169,7 +175,13 @@ export default function CartModal({ mostrar, onCerrar, info }) {
       const url = `https://wa.me/52${info.whatsapp}?text=${encodeURIComponent(mensaje)}`
 
       limpiarCarrito()
-      handleCerrarModal()
+      if (pedidoGuardado.folio) {
+        guardarUltimoFolio(pedidoGuardado.folio)
+        setFolioCreado(pedidoGuardado.folio)
+        setPaso('confirmado')
+      } else {
+        handleCerrarModal()
+      }
       window.open(url, '_blank')
     } catch (error) {
       console.error(error)
@@ -195,9 +207,11 @@ export default function CartModal({ mostrar, onCerrar, info }) {
           )}
           <div>
             <Dialog.Title className="font-display text-xl font-semibold text-parchment">
-              {paso === 'carrito' ? 'Tu Carrito' : 'Finalizar Pedido'}
+              {paso === 'carrito' ? 'Tu Carrito' : paso === 'confirmado' ? 'Pedido recibido' : 'Finalizar Pedido'}
             </Dialog.Title>
-            <p className="text-sm text-parchment-muted">{paso === 'carrito' ? `${totalItems} artículo(s)` : 'Completa tus datos'}</p>
+            <p className="text-sm text-parchment-muted">
+              {paso === 'carrito' ? `${totalItems} artículo(s)` : paso === 'confirmado' ? 'Gracias por tu pedido' : 'Completa tus datos'}
+            </p>
           </div>
         </div>
         <button
@@ -216,7 +230,9 @@ export default function CartModal({ mostrar, onCerrar, info }) {
           </div>
         )}
 
-        {paso === 'carrito' ? (
+        {paso === 'confirmado' ? (
+          <EstadoPedido key={folioCreado} folio={folioCreado} />
+        ) : paso === 'carrito' ? (
           carrito.length === 0 ? (
             <CarritoVacio onExplorar={handleCerrarModal} />
           ) : (
@@ -317,7 +333,11 @@ export default function CartModal({ mostrar, onCerrar, info }) {
       </div>
 
       <div className="shrink-0 border-t border-espresso-600 bg-espresso-900/90 p-4">
-        {paso === 'carrito' ? (
+        {paso === 'confirmado' ? (
+          <button onClick={handleCerrarModal} className={`h-14 w-full rounded-xl font-bold ${CLASE_BOTON_PRINCIPAL}`}>
+            Listo
+          </button>
+        ) : paso === 'carrito' ? (
           carrito.length > 0 && (
             <div className="mx-auto flex max-w-lg items-center gap-4">
               <div>

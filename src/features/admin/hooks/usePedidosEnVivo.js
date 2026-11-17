@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { getOrders, updateOrderStatus } from '../../../config/api'
+import { formatearFolio } from '../../../utils/folio'
 
 const INTERVALO_MS = 5000
 
@@ -12,7 +13,9 @@ export const claveDia = (fecha) => {
 // Adapta un pedido del API al formato que usa el panel
 export const formatear = (p) => ({
   id: p._id || p.id,
-  numero: p.numero || p._id?.substring(p._id.length - 6).toUpperCase() || 'N/A',
+  numero: p.folio
+    ? formatearFolio(p.folio)
+    : p.numero || p._id?.substring(p._id.length - 6).toUpperCase() || 'N/A',
   cliente: p.cliente || 'Cliente General',
   hora: p.createdAt
     ? new Date(p.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })

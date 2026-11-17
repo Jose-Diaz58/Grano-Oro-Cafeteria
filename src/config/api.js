@@ -29,7 +29,11 @@ async function pedir(ruta, { metodo = 'GET', cuerpo } = {}) {
     throw new Error('No se pudo conectar con el servidor')
   }
   const datos = await res.json().catch(() => null)
-  if (!res.ok) throw new Error(datos?.message ?? `Error del servidor (${res.status})`)
+  if (!res.ok) {
+    const error = new Error(datos?.message ?? `Error del servidor (${res.status})`)
+    error.status = res.status
+    throw error
+  }
   if (metodo !== 'GET') canalEmisor?.postMessage('cambio')
   return datos
 }
@@ -73,3 +77,6 @@ export const getOrders = async (limite = 100) => {
   return Array.isArray(datos) ? datos : (datos?.ventas ?? [])
 }
 export const updateOrderStatus = (id, estado) => pedir(`/ventas/actualizar/${id}`, { metodo: 'PUT', cuerpo: { estado } })
+
+// Seguimiento público de un pedido por su folio (solo devuelve estado y productos)
+export const trackOrder = (folio) => pedir(`/ventas/seguimiento/${folio}`)

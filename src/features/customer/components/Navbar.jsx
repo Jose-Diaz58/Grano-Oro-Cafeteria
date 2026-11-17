@@ -1,10 +1,13 @@
-import { Search, ShoppingCart, Info, Eye } from 'lucide-react'
+import { useState } from 'react'
+import { Search, ShoppingCart, Info, Eye, ClipboardList } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
+import SeguimientoModal from '../modals/SeguimientoModal'
 
 export default function Navbar({ cartCount, onOpenCart, busqueda, setBusqueda, onOpenInfo, nombre = 'Grano de Oro' }) {
   // Con sesión de administrador iniciada se muestra un cintillo para volver al panel
   const { token } = useAuth()
+  const [seguimientoAbierto, setSeguimientoAbierto] = useState(false)
 
   return (
     <header className="sticky top-0 z-40 flex flex-col">
@@ -37,6 +40,14 @@ export default function Navbar({ cartCount, onOpenCart, busqueda, setBusqueda, o
                 className="flex h-7 w-7 items-center justify-center rounded-full border border-espresso-500 bg-espresso-700 text-parchment-muted transition-colors hover:border-espresso-400 hover:text-parchment focus:outline-none"
               >
                 <Info className="h-4 w-4" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setSeguimientoAbierto(true)}
+                aria-label="Seguir mi pedido"
+                className="flex h-7 items-center gap-1.5 rounded-full border border-espresso-500 bg-espresso-700 px-2.5 text-xs font-medium text-parchment-muted transition-colors hover:border-espresso-400 hover:text-parchment focus:outline-none"
+              >
+                <ClipboardList className="h-4 w-4" strokeWidth={2} />
+                <span className="hidden sm:inline">Seguir pedido</span>
               </button>
             </div>
 
@@ -76,6 +87,8 @@ export default function Navbar({ cartCount, onOpenCart, busqueda, setBusqueda, o
           </button>
         </div>
       </div>
+
+      <SeguimientoModal abierto={seguimientoAbierto} onCerrar={() => setSeguimientoAbierto(false)} />
     </header>
   )
 }
