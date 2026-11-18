@@ -7,7 +7,7 @@ import { ESTADOS, BADGE } from '../../../config/constants'
 import { SkeletonRow, SkeletonForm } from '../../../components/ui/Skeletons'
 import { claveDia, formatearLista } from '../hooks/usePedidosEnVivo'
 
-const LIMITE_HISTORIAL = 300
+const LIMITE_HISTORIAL = 100
 const CLASE_LISTA = 'scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto p-3 md:block md:flex-1 md:overflow-y-auto md:p-0'
 
 const etiquetaDia = (clave) => {
@@ -100,7 +100,7 @@ function DetallePedido({ sel, onCambiarEstado, soloLectura }) {
         </div>
       )}
 
-      {!soloLectura && (
+      {(!soloLectura || sel.estado !== 'Entregado') && (
         <div>
           <p className="text-parchment-muted text-[11px] uppercase tracking-wider mb-3">Cambiar estado</p>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -171,6 +171,8 @@ export default function Pedidos() {
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       await guardarEstado(id, nuevoEstado)
+      // Mantiene el historial al día sin tener que volver a cargarlo
+      setHistorial((prev) => prev.map((p) => (p.id === id ? { ...p, estado: nuevoEstado } : p)))
       toast.success(`Pedido actualizado a ${nuevoEstado}`)
     } catch (err) {
       console.error(err)
