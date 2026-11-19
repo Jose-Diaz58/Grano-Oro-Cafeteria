@@ -250,12 +250,14 @@ export default function Pedidos() {
                 <p className="text-sm font-semibold text-parchment">Historial</p>
                 <p className="mt-0.5 text-[11px] text-parchment-muted md:hidden">Desliza para revisar</p>
               </div>
-              <button
+                            <button
                 onClick={cargarHistorial}
                 disabled={cargandoHist}
-                className="h-8 w-8 rounded-xl bg-espresso-700 border border-espresso-500 flex items-center justify-center text-parchment-muted hover:text-parchment hover:border-espresso-400 transition-colors disabled:opacity-50"
+                title="Volver a cargar el historial"
+                className="flex h-8 items-center justify-center gap-1.5 rounded-xl border border-espresso-500 bg-espresso-700 px-3 text-xs font-medium text-parchment-muted transition-colors hover:border-espresso-400 hover:text-parchment disabled:opacity-50"
               >
                 <RefreshCw className={`h-4 w-4 ${cargandoHist ? 'animate-spin' : ''}`} />
+                {cargandoHist ? 'Cargando...' : 'Recargar'}
               </button>
             </div>
 
